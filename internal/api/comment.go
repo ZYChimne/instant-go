@@ -1,21 +1,16 @@
-package apicomment
+package api
 
 import (
 	"log"
 	"net/http"
 	"time"
 	"zychimne/instant/internal/db"
-	"zychimne/instant/internal/util"
 	"zychimne/instant/pkg/model"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetComments(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var comments []model.Comment
 	query := "SELECT commentid, create_time, update_time, userid, content FROM comments WHERE insid = ?"
 	db := sql.ConnectDatabase()
@@ -40,10 +35,6 @@ func GetComments(c *gin.Context) {
 }
 
 func PostComment(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
@@ -66,10 +57,6 @@ func PostComment(c *gin.Context) {
 }
 
 func LikeComment(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
@@ -92,10 +79,6 @@ func LikeComment(c *gin.Context) {
 }
 
 func ShareComment(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())

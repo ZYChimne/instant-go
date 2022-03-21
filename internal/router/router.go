@@ -1,14 +1,13 @@
 package router
 
 import (
-	"time"
-	"zychimne/instant/internal/api/auth"
-	"zychimne/instant/internal/api/chat"
-	"zychimne/instant/internal/api/comment"
-	"zychimne/instant/internal/api/instant"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
+	"time"
+	"zychimne/instant/internal/api"
+	"zychimne/instant/internal/util"
 )
 
 func Create() {
@@ -22,23 +21,42 @@ func Create() {
 	}))
 	// Auth
 	authRouterGroup := r.Group("auth")
-	authRouterGroup.POST("register", apiauth.Register)
-	authRouterGroup.POST("getToken", apiauth.GetToken)
+	authRouterGroup.POST("register", api.Register)
+	authRouterGroup.POST("getToken", api.GetToken)
 	// Instant
-	instantRouterGroup := r.Group("instant")
-	instantRouterGroup.POST("get", apiinstant.GetInstants)
-	instantRouterGroup.POST("update", apiinstant.UpdateInstant)
-	instantRouterGroup.POST("post", apiinstant.PostInstant)
-	instantRouterGroup.POST("like", apiinstant.LikeInstant)
-	instantRouterGroup.POST("share", apiinstant.ShareInstant)
+	instantRouterGroup := r.Group("instant").Use(auth())
+	instantRouterGroup.POST("get", api.GetInstants)
+	instantRouterGroup.POST("update", api.UpdateInstant)
+	instantRouterGroup.POST("post", api.PostInstant)
+	instantRouterGroup.POST("like", api.LikeInstant)
+	instantRouterGroup.POST("share", api.ShareInstant)
 	// Chat
 	chatRouterGroup := r.Group("chat")
-	chatRouterGroup.GET("echo", apichat.Echo)
+	chatRouterGroup.GET("echo", api.Echo)
 	// Comment
-	commentRouterGroup := r.Group("comment")
-	commentRouterGroup.POST("get", apicomment.GetComments)
-	commentRouterGroup.POST("post", apicomment.PostComment)
-	commentRouterGroup.POST("like", apicomment.LikeComment)
-	commentRouterGroup.POST("share", apicomment.ShareComment)
+	commentRouterGroup := r.Group("comment").Use(auth())
+	commentRouterGroup.POST("get", api.GetComments)
+	commentRouterGroup.POST("post", api.PostComment)
+	commentRouterGroup.POST("like", api.LikeComment)
+	commentRouterGroup.POST("share", api.ShareComment)
+	// Friend
+	friendRouterGroup:=r.Group("friend").Use(auth())
+	friendRouterGroup.POST("get", api.GetFriends)
+	friendRouterGroup.POST("add", api.AddFriend)
+	friendRouterGroup.POST("remove", api.RemoveFriend)
+	friendRouterGroup.POST("potential", api.GetPotentialFriends)
 	r.Run(":8081")
+}
+
+func auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Println("auth is running")
+		token := c.GetHeader("Authentication")
+		userID, err := utilauth.VerifyJwt(token)
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusOK, gin.H{"code": 304})
+		}
+		c.Set("UserID", userID)
+	}
 }

@@ -1,4 +1,4 @@
-package apiauth
+package api
 
 import (
 	"log"
@@ -16,7 +16,7 @@ import (
 func Register(c *gin.Context) {
 	var user model.User
 	if err := c.Bind(&user); err != nil {
-		log.Fatal("Bind json failed ", err.Error())
+		log.Println("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"errCode": "400", "errMsg": err.Error()})
 	}
 	hash, err := hashPassword(user.Password)

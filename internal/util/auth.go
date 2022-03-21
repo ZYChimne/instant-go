@@ -10,15 +10,22 @@ import (
 
 var hmac = []byte("zychimne")
 
-func GenerateJwt(userid int) string {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "instant-go",
-		Subject:   "authentication",
-		Audience:  jwt.ClaimStrings{"instant-vue"},
-		ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(0, 0, 1)),
-		NotBefore: jwt.NewNumericDate(time.Now()),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		ID:        string(rune(userid)),
+type CustomClaims struct {
+	UserID int `json:"userid"`
+	jwt.RegisteredClaims
+}
+
+func GenerateJwt(userID int) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
+		userID,
+		jwt.RegisteredClaims{
+			Issuer:    "instant-go",
+			Subject:   "authentication",
+			Audience:  jwt.ClaimStrings{"instant-vue"},
+			ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(0, 0, 1)),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	})
 	tokenString, err := token.SignedString(hmac)
 	if err != nil {
@@ -27,13 +34,12 @@ func GenerateJwt(userid int) string {
 	return tokenString
 }
 
-func VerifyJwt(tokenString string) error {
-
+func VerifyJwt(tokenString string) (int, error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
 	// to the callback, providing flexibility.
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -41,10 +47,10 @@ func VerifyJwt(tokenString string) error {
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return hmac, nil
 	})
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		fmt.Println(claims)
-		return nil
+		return claims.UserID, nil
 	} else {
-		return err
+		return -1, err
 	}
 }

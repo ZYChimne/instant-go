@@ -15,6 +15,7 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 go run cmd/main.go
 ```
 
+### MySQL setup
 ```sql
 CREATE DATABASE instant
     DEFAULT CHARACTER SET = 'utf8mb4';

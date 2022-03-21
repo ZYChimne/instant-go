@@ -15,18 +15,12 @@ type User struct {
 	Country       int       `json:"country"`
 	Province      int       `json:"province"`
 	City          int       `json:"city"`
-	Birthday      time.Time `json:"birthday"`
+	Birthday      time.Time `form:"birthday"`
 	School        string    `json:"school"`
 	Company       string    `json:"company"`
 	Job           string    `json:"job"`
 	Mymode        int       `json:"mymode"`
 	Introduction  string    `json:"introduction"`
-	ProfileImage  int       `json:"profileimage"`
+	CoverPhoto  int       `json:"coverphoto"`
 	Tag           []string  `json:"tag"`
-	Following     []string  `json:"following"`
-	Followed      []string  `json:"followed"`
-	BlackList     []string  `json:"blacklist"`
-	InsIDList     []int     `json:"insidlist"`
-	LikeIDList    []int     `json:"likeidlist"`
-	CommentIDList []int     `json:"commentidlist"`
 }

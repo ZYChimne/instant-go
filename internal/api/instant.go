@@ -1,27 +1,23 @@
-package apiinstant
+package api
 
 import (
 	"log"
 	"net/http"
 	"time"
 	"zychimne/instant/internal/db"
-	"zychimne/instant/internal/util"
 	"zychimne/instant/pkg/model"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetInstants(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusOK, gin.H{"code": 304})
-		return
-	}
 	var instants []model.Instant
 	query := "SELECT insid, create_time, update_time, content FROM instants WHERE userid = ?"
 	db := sql.ConnectDatabase()
 	rows, err := db.Query(query, 14)
+	if err!=nil{
+		log.Fatal(err.Error())
+	}
 	db.Close()
 	defer rows.Close()
 	for rows.Next() {
@@ -42,10 +38,6 @@ func GetInstants(c *gin.Context) {
 }
 
 func PostInstant(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
@@ -68,10 +60,6 @@ func PostInstant(c *gin.Context) {
 }
 
 func UpdateInstant(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
@@ -94,10 +82,6 @@ func UpdateInstant(c *gin.Context) {
 }
 
 func LikeInstant(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var like model.Like
 	if err := c.Bind(&like); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
@@ -120,10 +104,6 @@ func LikeInstant(c *gin.Context) {
 }
 
 func ShareInstant(c *gin.Context) {
-	token := c.GetHeader("Authentication")
-	if err := utilauth.VerifyJwt(token); err != nil {
-		log.Fatal("jwt error", err.Error())
-	}
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
