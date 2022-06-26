@@ -13,7 +13,7 @@ import (
 func GetComments(c *gin.Context) {
 	var comments []model.Comment
 	query := "SELECT commentid, create_time, update_time, userid, content FROM comments WHERE insid = ?"
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	rows, err := db.Query(query, 1)
 	// db.Close()
 	// defer rows.Close()
@@ -41,7 +41,7 @@ func PostComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
 	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
 	db.Close()
 	if err != nil {
@@ -63,7 +63,7 @@ func LikeComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
 	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
 	db.Close()
 	if err != nil {
@@ -85,7 +85,7 @@ func ShareComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
 	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
 	db.Close()
 	if err != nil {

@@ -1,4 +1,4 @@
-package utilauth
+package utilAuth
 
 import (
 	"fmt"
@@ -47,9 +47,12 @@ func VerifyJwt(tokenString string) (int, error) {
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return hmac, nil
 	})
-	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
-		fmt.Println(claims)
-		return claims.UserID, nil
+	if token != nil {
+		if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
+			return claims.UserID, nil
+		} else {
+			return -1, err
+		}
 	} else {
 		return -1, err
 	}

@@ -3,10 +3,10 @@ package model
 import "time"
 
 type Instant struct {
-	InsID       int       `json:"insid"`
-	UserID      int       `json:"userid"`
-	CreateTime  time.Time `json:"createtime"`
-	UpdateTime  time.Time `json:"updatetime"`
+	InsID       int       `json:"insID"`
+	UserID      int       `json:"userID"`
+	CreateTime  time.Time `json:"createTime"`
+	UpdateTime  time.Time `json:"updateTime"`
 	Content     string    `json:"content"`
-	RefOriginId int       `json:"reforigininsid"`
+	RefOriginId int       `json:"refOriginInsId"`
 }

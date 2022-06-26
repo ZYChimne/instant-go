@@ -15,12 +15,12 @@ type User struct {
 	Country       int       `json:"country"`
 	Province      int       `json:"province"`
 	City          int       `json:"city"`
-	Birthday      time.Time `form:"birthday"`
+	Birthday      time.Time `json:"birthday"`
 	School        string    `json:"school"`
 	Company       string    `json:"company"`
 	Job           string    `json:"job"`
 	Mymode        int       `json:"mymode"`
 	Introduction  string    `json:"introduction"`
 	CoverPhoto  int       `json:"coverphoto"`
-	Tag           []string  `json:"tag"`
+	Tag          string  `json:"tag"`
 }

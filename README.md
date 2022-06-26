@@ -12,6 +12,8 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 ## Project setup
 
 ```bash
+git clone https://github.com/redis/redis.git # install redis 7
+./redis-7.0.2/src/redis-server
 go run cmd/main.go
 ```
 

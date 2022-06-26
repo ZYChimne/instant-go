@@ -25,8 +25,8 @@ func Create() {
 	authRouterGroup.POST("getToken", api.GetToken)
 	// Instant
 	instantRouterGroup := r.Group("instant").Use(auth())
-	instantRouterGroup.POST("get", api.GetInstants)
-	instantRouterGroup.POST("update", api.UpdateInstant)
+	instantRouterGroup.GET("get", api.GetInstants)
+	instantRouterGroup.PUT("update", api.UpdateInstant)
 	instantRouterGroup.POST("post", api.PostInstant)
 	instantRouterGroup.POST("like", api.LikeInstant)
 	instantRouterGroup.POST("share", api.ShareInstant)
@@ -35,7 +35,7 @@ func Create() {
 	chatRouterGroup.GET("echo", api.Echo)
 	// Comment
 	commentRouterGroup := r.Group("comment").Use(auth())
-	commentRouterGroup.POST("get", api.GetComments)
+	commentRouterGroup.GET("get", api.GetComments)
 	commentRouterGroup.POST("post", api.PostComment)
 	commentRouterGroup.POST("like", api.LikeComment)
 	commentRouterGroup.POST("share", api.ShareComment)
@@ -45,6 +45,9 @@ func Create() {
 	friendRouterGroup.POST("add", api.AddFriend)
 	friendRouterGroup.POST("remove", api.RemoveFriend)
 	friendRouterGroup.POST("potential", api.GetPotentialFriends)
+	// Profile
+	profileRouterGroup:=r.Group("profile").Use(auth())
+	profileRouterGroup.POST("get", api.GetUserInfo)
 	r.Run(":8081")
 }
 
@@ -52,10 +55,11 @@ func auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("auth is running")
 		token := c.GetHeader("Authentication")
-		userID, err := utilauth.VerifyJwt(token)
+		userID, err := utilAuth.VerifyJwt(token)
 		if err != nil {
 			log.Println(err.Error())
-			c.JSON(http.StatusOK, gin.H{"code": 304})
+			c.AbortWithStatus(http.StatusUnauthorized);
+			return
 		}
 		c.Set("UserID", userID)
 	}

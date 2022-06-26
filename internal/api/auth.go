@@ -3,7 +3,6 @@ package api
 import (
 	"log"
 	"net/http"
-	"strings"
 	"time"
 	"zychimne/instant/internal/db"
 	"zychimne/instant/internal/util"
@@ -24,8 +23,8 @@ func Register(c *gin.Context) {
 		log.Fatal("password hash error", err.Error())
 	}
 	query := `INSERT INTO accounts (mailbox, phone, pass_word, username, create_time, update_time, avatar, gender, country, province, city, birthday, school, company, job, introduction, profile_image, tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
-	result, err := db.Exec(query, user.MailBox, user.Phone, hash, user.Username, time.Now(), time.Now(), 0, user.Gender, user.Country, user.Province, user.City, user.Birthday, user.School, user.Company, user.Job, user.Introduction, 0, strings.Join(user.Tag, ","))
+	db := database.ConnectDatabase()
+	result, err := db.Exec(query, user.MailBox, user.Phone, hash, user.Username, time.Now(), time.Now(), 0, user.Gender, user.Country, user.Province, user.City, user.Birthday, user.School, user.Company, user.Job, user.Introduction, 0, user.Tag)
 	db.Close()
 	if err != nil {
 		log.Fatal("database result:, error: ", result, err.Error())
@@ -44,7 +43,7 @@ func GetToken(c *gin.Context) {
 		hash   string
 	)
 	query := `SELECT userid, pass_word FROM accounts WHERE mailbox = ?`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	if err := db.QueryRow(query, user.MailBox).Scan(&userid, &hash); err != nil {
 		log.Fatal("database error", err.Error())
 	}
@@ -53,7 +52,7 @@ func GetToken(c *gin.Context) {
 		log.Println("password error")
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": utilauth.GenerateJwt(userid), "userid": userid})
+	c.JSON(http.StatusOK, gin.H{"token": utilAuth.GenerateJwt(userid), "userid": userid})
 }
 
 func hashPassword(password string) (string, error) {

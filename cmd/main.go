@@ -1,7 +1,11 @@
 package main
 
-import "zychimne/instant/internal/router"
+import (
+	database "zychimne/instant/internal/db"
+	"zychimne/instant/internal/router"
+)
 
 func main() {
+	database.ConnectRedis()
 	router.Create()
 }

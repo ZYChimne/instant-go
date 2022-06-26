@@ -13,7 +13,7 @@ import (
 func GetFriends(c *gin.Context) {
 	var comments []model.Comment
 	query := "SELECT commentid, create_time, update_time, userid, content FROM comments WHERE insid = ?"
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	rows, err := db.Query(query, 1)
 	// db.Close()
 	// defer rows.Close()
@@ -38,7 +38,7 @@ func GetPotentialFriends(c *gin.Context) {
 	var users []model.User
 	// query := "SELECT firstid, secondid FROM friends WHERE firstid = ? OR secondid = ?"
 	query := "SELECT userid, avatar, username FROM accounts WHERE userid != ?"
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	rows, err := db.Query(query, 14)
 	// db.Close()
 	// defer rows.Close()
@@ -72,7 +72,7 @@ func AddFriend(c *gin.Context) {
 		friend.SecondID=temp
 	}
 	query := `INSERT INTO friends (create_time, update_time, firstid, secondid) VALUES (?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	result, err := db.Exec(query, time.Now(), time.Now(), friend.FirstID, friend.SecondID)
 	db.Close()
 	if err != nil {
@@ -94,7 +94,7 @@ func RemoveFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
 	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := sql.ConnectDatabase()
+	db := database.ConnectDatabase()
 	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
 	db.Close()
 	if err != nil {
