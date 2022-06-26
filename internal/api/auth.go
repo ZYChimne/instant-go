@@ -36,23 +36,26 @@ func GetToken(c *gin.Context) {
 	var user model.User
 	if err := c.Bind(&user); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"errCode": "400", "errMsg": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": err.Error()})
 	}
+	log.Println(user);
 	var (
-		userid int
+		userID int
 		hash   string
 	)
-	query := `SELECT userid, pass_word FROM accounts WHERE mailbox = ?`
+	query := `SELECT user_id, pass_word FROM accounts WHERE mailbox = ?`
 	db := database.ConnectDatabase()
-	if err := db.QueryRow(query, user.MailBox).Scan(&userid, &hash); err != nil {
-		log.Fatal("database error", err.Error())
+	if err := db.QueryRow(query, user.MailBox).Scan(&userID, &hash); err != nil {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": http.StatusForbidden, "message": "Please check if your account or password is correct"})
+		log.Println("database error: ", err.Error(), "& account not found")
+		db.Close();
+		return
 	}
 	db.Close()
 	if !checkPasswordHash(user.Password, hash) {
 		log.Println("password error")
 	}
-
-	c.JSON(http.StatusOK, gin.H{"token": utilAuth.GenerateJwt(userid), "userid": userid})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": gin.H{"token": utilAuth.GenerateJwt(userID)}, "message": "ok"})
 }
 
 func hashPassword(password string) (string, error) {

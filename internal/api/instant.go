@@ -45,7 +45,7 @@ func PostInstant(c *gin.Context) {
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "error"})
 	}
 	query := `INSERT INTO instants (user_id, create_time, update_time, content) VALUES (?, ?, ?, ?)`
 	db := database.ConnectDatabase()
@@ -127,5 +127,4 @@ func ShareInstant(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200, "id": id,
 	})
-
 }
