@@ -18,5 +18,5 @@ func GetUserInfo(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "data": user})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
 }

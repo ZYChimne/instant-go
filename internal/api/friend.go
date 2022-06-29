@@ -16,7 +16,6 @@ func GetFriends(c *gin.Context) {
 func GetPotentialFriends(c *gin.Context) {
 	var users []model.User
 	rows, err := database.GetPotentialFriends(14)
-	// defer rows.Close()
 	for rows.Next() {
 		var user model.User
 		err := rows.Scan(&user.UserID, &user.Avatar, &user.Username)
@@ -28,10 +27,11 @@ func GetPotentialFriends(c *gin.Context) {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "data": users})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 }
 
 func AddFriend(c *gin.Context) {

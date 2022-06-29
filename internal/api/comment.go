@@ -12,8 +12,6 @@ import (
 func GetComments(c *gin.Context) {
 	var comments []model.Comment
 	rows, err := database.GetComments(1)
-	// db.Close()
-	// defer rows.Close()
 	for rows.Next() {
 		var comment model.Comment
 		err := rows.Scan(&comment.CommentID, &comment.CreateTime, &comment.UpdateTime, &comment.UserID, &comment.Content)
@@ -25,17 +23,18 @@ func GetComments(c *gin.Context) {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "data": comments})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": comments})
 }
 
 func PostComment(c *gin.Context) {
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error()})
 	}
 	result, err := database.PostComment(comment);
 	if err != nil {
@@ -46,7 +45,7 @@ func PostComment(c *gin.Context) {
 		log.Fatal("Post comment error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 200, "id": id,
+		"code": http.StatusOK, "data": id,
 	})
 }
 
@@ -54,7 +53,7 @@ func LikeComment(c *gin.Context) {
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error()})
 	}
 	result, err := database.PostComment(comment)
 	if err != nil {
@@ -65,7 +64,7 @@ func LikeComment(c *gin.Context) {
 		log.Fatal("Post instant error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 200, "id": id,
+		"code": http.StatusOK, "data": id,
 	})
 }
 
@@ -73,7 +72,7 @@ func ShareComment(c *gin.Context) {
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error()})
 	}
 	result, err :=database.PostComment(comment)
 	if err != nil {
@@ -84,6 +83,6 @@ func ShareComment(c *gin.Context) {
 		log.Fatal("Post instant error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 200, "id": id,
+		"code": http.StatusOK, "data": id,
 	})
 }

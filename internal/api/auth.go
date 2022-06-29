@@ -20,7 +20,7 @@ func Register(c *gin.Context) {
 	if err != nil {
 		log.Panic("database result:, error: ", result, err.Error())
 	}
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusCreated})
 }
 
 func GetToken(c *gin.Context) {

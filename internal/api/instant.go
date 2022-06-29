@@ -90,7 +90,7 @@ func LikeInstant(c *gin.Context) {
 		log.Fatal("Post instant error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 200, "id": id,
+		"code": http.StatusOK, "id": id,
 	})
 }
 
@@ -109,6 +109,6 @@ func ShareInstant(c *gin.Context) {
 		log.Fatal("Post instant error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 200, "id": id,
+		"code": http.StatusOK, "data": id,
 	})
 }
