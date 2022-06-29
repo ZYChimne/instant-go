@@ -14,7 +14,7 @@ func Register(c *gin.Context) {
 	var user model.User
 	if err := c.Bind(&user); err != nil {
 		log.Println("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"errCode": "400", "errMsg": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": err.Error()})
 	}
 	result, err := database.Register(user)
 	if err != nil {
