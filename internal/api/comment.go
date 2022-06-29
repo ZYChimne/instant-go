@@ -3,8 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
-	"time"
-	"zychimne/instant/internal/db"
+	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +11,7 @@ import (
 
 func GetComments(c *gin.Context) {
 	var comments []model.Comment
-	query := "SELECT commentid, create_time, update_time, userid, content FROM comments WHERE insid = ?"
-	db := database.ConnectDatabase()
-	rows, err := db.Query(query, 1)
+	rows, err := database.GetComments(1)
 	// db.Close()
 	// defer rows.Close()
 	for rows.Next() {
@@ -40,16 +37,13 @@ func PostComment(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
-	db.Close()
+	result, err := database.PostComment(comment);
 	if err != nil {
 		log.Fatal(err)
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
-		log.Fatal("Post instant error ", err.Error())
+		log.Fatal("Post comment error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200, "id": id,
@@ -62,10 +56,7 @@ func LikeComment(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
-	db.Close()
+	result, err := database.PostComment(comment)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,10 +75,7 @@ func ShareComment(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
-	db.Close()
+	result, err :=database.PostComment(comment)
 	if err != nil {
 		log.Fatal(err)
 	}

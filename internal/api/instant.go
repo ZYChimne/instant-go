@@ -3,8 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
-	"time"
-	"zychimne/instant/internal/db"
+	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
 	"github.com/gin-gonic/gin"
@@ -15,13 +14,10 @@ func GetInstants(c *gin.Context) {
 	index := c.Query("index")
 	if userID != nil && userID != -1 && index != "" {
 		instants := []model.Instant{}
-		query := "SELECT ins_id, create_time, update_time, content FROM instants WHERE user_id = ? LIMIT ?, 10"
-		db := database.ConnectDatabase()
-		rows, err := db.Query(query, userID, index)
+		rows, err := database.GetInstants(userID, index)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		db.Close()
 		defer rows.Close()
 		for rows.Next() {
 			var instant model.Instant
@@ -47,10 +43,7 @@ func PostInstant(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "error"})
 	}
-	query := `INSERT INTO instants (user_id, create_time, update_time, content) VALUES (?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, instant.UserID, time.Now(), time.Now(), instant.Content)
-	db.Close()
+	result, err := database.PostInstant(instant);
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,10 +62,7 @@ func UpdateInstant(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `UPDATE instants SET update_time = ?, content = ? WHERE ins_id = ?`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, time.Now(), instant.Content, instant.InsID)
-	db.Close()
+	result, err := database.UpdateInstant(instant)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,10 +81,7 @@ func LikeInstant(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `INSERT INTO likes (create_time, update_time, insid, userid, attitude) VALUES (?, ?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, time.Now(), time.Now(), like.InsID, like.UserID, like.Attitude)
-	db.Close()
+	result, err := database.LikeInstant(like)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,10 +100,7 @@ func ShareInstant(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
 	}
-	query := `INSERT INTO instants (userid, create_time, update_time, content, ref_origin_id) VALUES (?, ?, ?, ?, ?)`
-	db := database.ConnectDatabase()
-	result, err := db.Exec(query, instant.UserID, time.Now(), time.Now(), instant.Content, instant.RefOriginId)
-	db.Close()
+	result, err := database.ShareInstant(instant)
 	if err != nil {
 		log.Fatal(err)
 	}
