@@ -37,8 +37,8 @@ func Create() {
 	commentRouterGroup := r.Group("comment").Use(auth())
 	commentRouterGroup.GET("get", api.GetComments)
 	commentRouterGroup.POST("post", api.PostComment)
-	commentRouterGroup.POST("like", api.LikeComment)
-	commentRouterGroup.POST("share", api.ShareComment)
+	// commentRouterGroup.POST("like", api.LikeComment)
+	// commentRouterGroup.POST("share", api.ShareComment)
 	// Friend
 	friendRouterGroup:=r.Group("friend").Use(auth())
 	friendRouterGroup.GET("get", api.GetFriends)

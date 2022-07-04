@@ -12,11 +12,11 @@ import (
 var hmac = []byte("zychimne")
 
 type CustomClaims struct {
-	UserID int `json:"userid"`
+	UserID string `json:"userID"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJwt(userID int) string {
+func GenerateJwt(userID string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
 		userID,
 		jwt.RegisteredClaims{
@@ -35,7 +35,7 @@ func GenerateJwt(userID int) string {
 	return tokenString
 }
 
-func VerifyJwt(tokenString string) (int, error) {
+func VerifyJwt(tokenString string) (string, error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -52,10 +52,10 @@ func VerifyJwt(tokenString string) (int, error) {
 		if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 			return claims.UserID, nil
 		} else {
-			return -1, err
+			return "", err
 		}
 	} else {
-		return -1, err
+		return "", err
 	}
 }
 

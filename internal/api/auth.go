@@ -29,17 +29,13 @@ func GetToken(c *gin.Context) {
 		log.Fatal("Bind json failed ", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": err.Error()})
 	}
-	var (
-		userID int
-		hash   string
-	)
-	if err := database.GetToken(user, &userID, &hash); err != nil {
+	if err := database.GetToken(user.MailBox, &user); err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": http.StatusForbidden, "message": "Please check if your account or password is correct"})
 		log.Println("database error: ", err.Error(), "& account not found")
 		return
 	}
-	if !util.CheckPasswordHash(user.Password, hash) {
+	if !util.CheckPasswordHash(user.Password, user.Password) {
 		log.Println("password error")
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": gin.H{"token": util.GenerateJwt(userID)}, "message": "ok"})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": gin.H{"token": util.GenerateJwt(user.UserID)}, "message": "ok"})
 }

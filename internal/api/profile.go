@@ -13,10 +13,7 @@ func GetUserInfo(c *gin.Context) {
 	var user model.User
 	err := database.GetUserInfo(&user)
 	if err != nil {
-		log.Fatal(err.Error())
-	}
-	if err != nil {
-		log.Fatal(err)
+		log.Panic(err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
 }

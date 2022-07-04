@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"strconv"
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
@@ -10,62 +11,93 @@ import (
 )
 
 func GetFriends(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": "", "message":"ok"})
+	userID := c.MustGet("userID")
+	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
+	if userID != "" && err == nil {
+		users := make([]model.User, pageSize)
+		rows, err := database.GetPotentialFollowing(userID.(string), index, pageSize)
+		if err != nil {
+			log.Panic(err)
+		}
+		defer rows.Close(ctx)
+		cnt := 0
+		for rows.Next(ctx) {
+			var user model.User
+			err := rows.Decode(&user)
+			if err != nil {
+				log.Panic(err)
+			}
+			users[cnt] = user
+			cnt += 1
+		}
+		if err := rows.Err(); err != nil {
+			log.Panic(err)
+		}
+		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
+	}
 }
 
 func GetPotentialFriends(c *gin.Context) {
-	var users []model.User
-	rows, err := database.GetPotentialFriends(14)
-	for rows.Next() {
-		var user model.User
-		err := rows.Scan(&user.UserID, &user.Avatar, &user.Username)
+	userID := c.MustGet("userID")
+	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
+	if userID != "" && err == nil {
+		users := make([]model.User, pageSize)
+		rows, err := database.GetPotentialFollowing(userID.(string), index, pageSize)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
-		users = append(users, user)
+		defer rows.Close(ctx)
+		cnt := 0
+		for rows.Next(ctx) {
+			var user model.User
+			err := rows.Decode(&user)
+			if err != nil {
+				log.Panic(err)
+			}
+			users[cnt] = user
+			cnt += 1
+		}
+		if err := rows.Err(); err != nil {
+			log.Panic(err)
+		}
+		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 	}
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 }
 
 func AddFriend(c *gin.Context) {
-	var friend model.Friend
-	if err := c.Bind(&friend); err != nil {
-		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message":"ok"})
+	userID := c.MustGet("userID")
+	if userID != "" {
+		var follower model.Follower
+		if err := c.Bind(&follower); err != nil {
+			log.Fatal("Bind json failed ", err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
+		}
+		follower.UserID = userID.(string)
+		result, err := database.AddFollowing(follower)
+		if err != nil {
+			log.Panic("Post instant error ", err.Error())
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusAccepted, "data": result.InsertedID, "message": "accepted",
+		})
 	}
-	// Sort Before Insert
-	if(friend.FirstID>friend.SecondID){
-		temp:=friend.FirstID
-		friend.FirstID=friend.SecondID
-		friend.SecondID=temp
-	}
-	result, err := database.AddFriend(friend)
-	if err != nil {
-		log.Fatal(err)
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		log.Fatal("Post instant error ", err.Error())
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusAccepted, "data": id, "message":"accepted",
-	})
 }
 
 func RemoveFriend(c *gin.Context) {
-	var comment model.Comment
-	if err := c.Bind(&comment); err != nil {
-		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": "400", "data": err.Error()})
+	userID := c.MustGet("userID")
+	if userID != "" {
+		var follower model.Follower
+		if err := c.Bind(&follower); err != nil {
+			log.Fatal("Bind json failed ", err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
+		}
+		follower.UserID = userID.(string)
+		result, err := database.RemoveFollowing(follower)
+		if err != nil {
+			log.Panic("Post instant error ", err.Error())
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusAccepted, "data": result.DeletedCount, "message": "accepted",
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK, "data": "","message":"ok",
-	})
 }

@@ -3,10 +3,10 @@ package model
 import "time"
 
 type Like struct {
-	LikeID     int       `json:"likeid"`
-	CreateTime time.Time `json:"createtime"`
-	UpdateTime time.Time `json:"updatetime"`
-	InsID      int       `json:"insid"`
-	UserID     int       `json:"userid"`
-	Attitude   int       `json:"attitude"`
+	LikeID       string    `json:"likeID" bson:"_id"`
+	Created      time.Time `json:"created"`
+	LastModified time.Time `json:"lastModified"`
+	InsID        string    `json:"insID"`
+	UserID       string    `json:"userID"`
+	Attitude     int       `json:"attitude"`
 }

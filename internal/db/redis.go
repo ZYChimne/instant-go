@@ -1,13 +1,10 @@
 package database
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
 )
-
-var ctx=context.Background()
 
 func ConnectRedis(){
 	rdb := redis.NewClient(&redis.Options{

@@ -1,22 +1,18 @@
 package database
 
 import (
-	"database/sql"
-	"log"
 	"time"
 	"zychimne/instant/pkg/model"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetComments(insID int) (*sql.Rows, error) {
-	query := "SELECT comment_id, create_time, update_time, user_id, content FROM comments WHERE ins_id = ?"
-	return db.Query(query, insID)
+func GetComments(insID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	return mongoDB.Comments.Find(ctx, bson.M{"insID": insID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
 }
 
-func PostComment(comment model.Comment) (sql.Result, error) {
-	query := `INSERT INTO comments (create_time, update_time, ins_id, user_id, content) VALUES (?, ?, ?, ?, ?)`
-	return db.Exec(query, time.Now(), time.Now(), comment.InsID, comment.UserID, comment.Content)
-}
-
-func LikeComment() {
-	log.Println("Not implemented")
+func PostComment(comment model.Comment) (*mongo.InsertOneResult, error) {
+	return mongoDB.Comments.InsertOne(ctx, bson.M{"created":time.Now(), "insID":comment.InsID, "userID":comment.UserID, "content":comment.Content})
 }

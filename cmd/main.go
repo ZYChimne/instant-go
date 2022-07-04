@@ -7,6 +7,6 @@ import (
 
 func main() {
 	database.ConnectRedis()
-	database.ConnectSQL()
+	database.ConnectMongoDB()
 	router.Create()
 }
