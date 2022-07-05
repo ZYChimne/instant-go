@@ -11,7 +11,7 @@ import (
 )
 
 func GetComments(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if userID != "" && err == nil  {
@@ -39,7 +39,7 @@ func GetComments(c *gin.Context) {
 }
 
 func PostComment(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID !="" {
 		var comment model.Comment
 		if err := c.Bind(&comment); err != nil {

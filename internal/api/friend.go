@@ -11,7 +11,7 @@ import (
 )
 
 func GetFollowings(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if userID != "" && err == nil {
 		followings := []model.Following{}
@@ -36,7 +36,7 @@ func GetFollowings(c *gin.Context) {
 }
 
 func GetPotentialFollowing(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if userID != "" && err == nil {
 		followings := []model.Following{}
@@ -61,7 +61,7 @@ func GetPotentialFollowing(c *gin.Context) {
 }
 
 func AddFollowing(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var following model.Following
 		if err := c.Bind(&following); err != nil {
@@ -80,7 +80,7 @@ func AddFollowing(c *gin.Context) {
 }
 
 func RemoveFollowing(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var following model.Following
 		if err := c.Bind(&following); err != nil {

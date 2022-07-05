@@ -36,7 +36,7 @@ func GetInstants(c *gin.Context) {
 }
 
 func PostInstant(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var instant model.Instant
 		if err := c.Bind(&instant); err != nil {
@@ -55,7 +55,7 @@ func PostInstant(c *gin.Context) {
 }
 
 func UpdateInstant(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var instant model.Instant
 		if err := c.Bind(&instant); err != nil {
@@ -74,7 +74,7 @@ func UpdateInstant(c *gin.Context) {
 }
 
 func LikeInstant(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var like model.Like
 		if err := c.Bind(&like); err != nil {
@@ -93,7 +93,7 @@ func LikeInstant(c *gin.Context) {
 }
 
 func ShareInstant(c *gin.Context) {
-	userID := c.MustGet("userID")
+	userID := c.MustGet("UserID")
 	if userID != "" {
 		var instant model.Instant
 		if err := c.Bind(&instant); err != nil {

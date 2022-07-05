@@ -8,5 +8,5 @@ type Instant struct {
 	Created      time.Time `json:"created"`
 	LastModified time.Time `json:"lastModified"`
 	Content      string    `json:"content"`
-	RefOriginID  string    `json:"refOriginInsID"`
+	RefOriginID  string    `json:"refOriginID"`
 }
