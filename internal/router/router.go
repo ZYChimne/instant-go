@@ -41,10 +41,10 @@ func Create() {
 	// commentRouterGroup.POST("share", api.ShareComment)
 	// Friend
 	friendRouterGroup:=r.Group("friend").Use(auth())
-	friendRouterGroup.GET("get", api.GetFriends)
-	friendRouterGroup.POST("add", api.AddFriend)
-	friendRouterGroup.DELETE("remove", api.RemoveFriend)
-	friendRouterGroup.GET("potential", api.GetPotentialFriends)
+	friendRouterGroup.GET("get", api.GetFollowings)
+	friendRouterGroup.POST("add", api.AddFollowing)
+	friendRouterGroup.DELETE("remove", api.RemoveFollowing)
+	friendRouterGroup.GET("potential", api.GetPotentialFollowing)
 	// Profile
 	profileRouterGroup:=r.Group("profile").Use(auth())
 	profileRouterGroup.GET("get", api.GetUserInfo)

@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type Follower struct {
+type Following struct {
 	UserID       string    `json:"userID"`
 	FollowingID  string    `json:"followingID"`
 	Created      time.Time `json:"created"`

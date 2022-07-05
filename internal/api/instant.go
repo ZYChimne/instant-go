@@ -14,21 +14,19 @@ func GetInstants(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
 	if userID != nil && userID != "" && err == nil {
-		instants := make([]model.Instant, pageSize)
+		instants := []model.Instant{}
 		rows, err := database.GetInstants(userID.(string), index, pageSize)
 		if err != nil {
 			log.Panic(err.Error())
 		}
 		defer rows.Close(ctx)
-		cnt := 0
 		for rows.Next(ctx) {
 			var instant model.Instant
 			err := rows.Decode(&instant)
 			if err != nil {
 				log.Fatal(err)
 			}
-			instants[cnt] = instant
-			cnt += 1
+			instants = append(instants, instant)
 		}
 		if err := rows.Err(); err != nil {
 			log.Fatal(err)
