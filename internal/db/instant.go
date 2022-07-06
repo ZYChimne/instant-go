@@ -11,29 +11,53 @@ import (
 )
 
 func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
-	objectID, err := primitive.ObjectIDFromHex(userID)
+	oID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.Find(ctx, bson.M{"userID": objectID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
+	return mongoDB.Instants.Find(ctx, bson.M{"userID": oID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
 }
 
 func PostInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
-	objectID, err := primitive.ObjectIDFromHex(instant.UserID)
+	oID, err := primitive.ObjectIDFromHex(instant.UserID)
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": objectID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content})
+	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content})
 }
 
 func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {
-	return mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instant.InsID}, bson.M{"$set": bson.M{"content": instant.Content}, "$currentDate": bson.M{"lastModified": true}})
+	userOID, err := primitive.ObjectIDFromHex(instant.UserID)
+	if err != nil {
+		return nil, err
+	}
+	instantOID, err := primitive.ObjectIDFromHex(instant.InsID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID, "userID":userOID}, bson.M{"$set": bson.M{"content": instant.Content}, "$currentDate": bson.M{"lastModified": true}})
 }
 
 func LikeInstant(like model.Like) (*mongo.UpdateResult, error) {
-	return mongoDB.Instants.UpdateOne(ctx, bson.M{"insID": like.InsID}, bson.M{"$set": bson.M{"useID": like.UserID, "attitude": like.Attitude}, "$currentDate": bson.M{"lastModified": true}})
+	userOID, err := primitive.ObjectIDFromHex(like.UserID)
+	if err != nil {
+		return nil, err
+	}
+	instantOID, err := primitive.ObjectIDFromHex(like.InsID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Instants.UpdateOne(ctx, bson.M{"insID": instantOID}, bson.M{"$set": bson.M{"useID": userOID, "attitude": like.Attitude}, "$currentDate": bson.M{"lastModified": true}})
 }
 
 func ShareInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
-	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": instant.UserID, "created": time.Now(), "content": instant.Content, "refOriginID": instant.RefOriginID})
+	userOID, err := primitive.ObjectIDFromHex(instant.UserID)
+	if err != nil {
+		return nil, err
+	}
+	instantOID, err := primitive.ObjectIDFromHex(instant.RefOriginID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": userOID, "created": time.Now(), "content": instant.Content, "refOriginID": instantOID})
 }

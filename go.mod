@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/gorilla/websocket v1.5.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
@@ -20,6 +19,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
+	github.com/go-redis/redis/v9 v9.0.0-beta.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/golang/mock v1.6.0 // indirect
