@@ -7,4 +7,5 @@ type MongoDB struct {
 	Instants  *mongo.Collection
 	Comments  *mongo.Collection
 	Followings *mongo.Collection
+	Likes *mongo.Collection
 }

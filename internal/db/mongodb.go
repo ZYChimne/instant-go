@@ -13,12 +13,13 @@ import (
 var mongoDB *model.MongoDB
 
 func ConnectMongoDB() {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Connect MongoDB error ",err)
+		return
 	}
 	database := client.Database("instant")
-	mongoDB = &model.MongoDB{Users: database.Collection("users"), Instants: database.Collection("instants"), Comments: database.Collection("comments"), Followings: database.Collection("followings")}
+	mongoDB = &model.MongoDB{Users: database.Collection("users"), Instants: database.Collection("instants"), Comments: database.Collection("comments"), Followings: database.Collection("followings"), Likes: database.Collection("likes")}
 }
