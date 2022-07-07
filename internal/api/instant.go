@@ -50,19 +50,19 @@ func PostInstant(c *gin.Context) {
 	errMsg := "Post instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		log.Fatal("Bind json failed ", err.Error())
+		log.Println("Bind json failed ", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
 		return
 	}
 	instant.UserID = userID.(string)
-	result, err := database.PostInstant(instant)
+	_, err := database.PostInstant(instant)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK, "data": result.InsertedID,
+	c.JSON(http.StatusCreated, gin.H{
+		"code": http.StatusCreated,
 	})
 }
 
@@ -102,16 +102,11 @@ func LikeInstant(c *gin.Context) {
 		return
 	}
 	like.UserID = userID.(string)
-	result, err := database.LikeInstant(like)
+	err := database.LikeInstant(like)
 	if err != nil {
 		log.Panic("Database Error ", err.Error())
 	}
-	if result.ModifiedCount == 0 {
-		log.Println("No instant updates ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"code": http.StatusCreated,
 	})
 }

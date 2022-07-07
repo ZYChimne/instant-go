@@ -6,8 +6,8 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 
 * High Performance and Scalable
 * Access: RESTful
-* Logical: grpc
 * Storage: Redis, Mongodb (https://www.mongodb.com/developer/products/mongodb/mongodb-schema-design-best-practices/)
+* Fan out on Write
 
 ## Project setup
 
@@ -182,7 +182,9 @@ go run cmd/main.go
       'userID',
       'created',
       'lastModified',
-      'content'
+      'content',
+      'likes',
+      'shares'
     ],
     properties: {
       userID: {
@@ -205,6 +207,16 @@ go run cmd/main.go
       refOriginID: {
         bsonType: 'objectId',
         description: 'must be a valid refOriginID'
+      },
+      likes: {
+        bsonType: 'int',
+        minimum: 0,
+        description: 'must be greater than 0'
+      },
+      shares: {
+        bsonType: 'int',
+        minimum: 0,
+        description: 'must be greater than 0'
       }
     }
   }

@@ -35,8 +35,8 @@ func Create() {
 	chatRouterGroup.GET("echo", api.Echo)
 	// Comment
 	commentRouterGroup := r.Group("comment").Use(auth())
-	commentRouterGroup.GET("get", api.GetComments)
-	commentRouterGroup.POST("post", api.PostComment)
+	commentRouterGroup.GET("", api.GetComments)
+	commentRouterGroup.POST("", api.PostComment)
 	// commentRouterGroup.POST("like", api.LikeComment)
 	// commentRouterGroup.POST("share", api.ShareComment)
 	// Friend

@@ -1,6 +1,8 @@
 package database
 
 import (
+	"errors"
+	"strings"
 	"time"
 	"zychimne/instant/pkg/model"
 
@@ -23,7 +25,7 @@ func PostInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content})
+	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content, "likes": 0, "shares": 0})
 }
 
 func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {
@@ -35,19 +37,39 @@ func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID, "userID":userOID}, bson.M{"$set": bson.M{"content": instant.Content}, "$currentDate": bson.M{"lastModified": true}})
+	return mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID, "userID": userOID}, bson.M{"$set": bson.M{"content": instant.Content}, "$currentDate": bson.M{"lastModified": true}})
 }
 
-func LikeInstant(like model.Like) (*mongo.UpdateResult, error) {
-	userOID, err := primitive.ObjectIDFromHex(like.UserID)
+func LikeInstant(like model.Like) error {
+	session, err := mongoDB.Client.StartSession()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	instantOID, err := primitive.ObjectIDFromHex(like.InsID)
-	if err != nil {
-		return nil, err
+	defer session.EndSession(ctx)
+	callback := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		userOID, err := primitive.ObjectIDFromHex(like.UserID)
+		if err != nil {
+			return nil, err
+		}
+		instantOID, err := primitive.ObjectIDFromHex(like.InsID)
+		if err != nil {
+			return nil, err
+		}
+		res1, err := mongoDB.Likes.UpdateOne(ctx, bson.M{"insID": instantOID}, bson.M{"$set": bson.M{"useID": userOID, "attitude": like.Attitude}, "$currentDate": bson.M{"lastModified": true}}, options.Update().SetUpsert(true))
+		if err != nil {
+			return res1, nil
+		}
+		res2, err := mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID}, bson.M{"$inc": bson.M{"likes": 1}})
+		if err != nil {
+			return res2, nil
+		}
+		if (res1.UpsertedCount+res1.ModifiedCount != 1) || res2.ModifiedCount == 0 {
+			return nil, errors.New(strings.Join([]string{"", "instant not found"}, " "))
+		}
+		return nil, nil
 	}
-	return mongoDB.Instants.UpdateOne(ctx, bson.M{"insID": instantOID}, bson.M{"$set": bson.M{"useID": userOID, "attitude": like.Attitude}, "$currentDate": bson.M{"lastModified": true}})
+	_, err = session.WithTransaction(ctx, callback)
+	return err
 }
 
 func ShareInstant(instant model.Instant) (*mongo.InsertOneResult, error) {

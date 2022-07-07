@@ -9,4 +9,6 @@ type Instant struct {
 	LastModified time.Time `json:"lastModified"`
 	Content      string    `json:"content"`
 	RefOriginID  string    `json:"refOriginID"`
+	Likes        int       `json:"likes"`
+	Shares       int       `json:"shares"`
 }

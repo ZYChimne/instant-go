@@ -47,10 +47,10 @@ func AddFollowing(following model.Following) error {
 		if err != nil {
 			return res3, err
 		}
-		if res2.ModifiedCount == 1 && res3.ModifiedCount == 1 {
-			return nil, nil
+		if res2.ModifiedCount != 1 || res3.ModifiedCount != 1 {
+			return nil, errors.New(strings.Join([]string{"inc followings:", strconv.FormatInt(res2.ModifiedCount, 10), "inc followers:", strconv.FormatInt(res3.ModifiedCount, 10)}, " "))
 		}
-		return nil, errors.New(strings.Join([]string{"inc followings:", strconv.FormatInt(res2.ModifiedCount, 10), "inc followers:", strconv.FormatInt(res3.ModifiedCount, 10)}, " "))
+		return nil, nil
 	}
 	_, err = session.WithTransaction(ctx, callback)
 	return err
@@ -83,10 +83,10 @@ func RemoveFollowing(following model.Following) error {
 		if err != nil {
 			return res3, err
 		}
-		if res1.DeletedCount == 1 && res2.ModifiedCount == 1 &&res3.ModifiedCount ==1 {
-			return nil, nil
+		if res1.DeletedCount != 1 || res2.ModifiedCount == 1 || res3.ModifiedCount != 1 {
+			return nil, errors.New(strings.Join([]string{"delete:", strconv.FormatInt(res1.DeletedCount, 10), "inc followings:", strconv.FormatInt(res2.ModifiedCount, 10), "inc followers:", strconv.FormatInt(res3.ModifiedCount, 10)}, " "))
 		}
-		return nil, errors.New(strings.Join([]string{"delete:", strconv.FormatInt(res1.DeletedCount, 10), "inc followings:", strconv.FormatInt(res2.ModifiedCount, 10), "inc followers:", strconv.FormatInt(res3.ModifiedCount, 10)}, " "))
+		return nil, nil
 	}
 	_, err = session.WithTransaction(ctx, callback)
 	return err
