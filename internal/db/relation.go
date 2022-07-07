@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 	"zychimne/instant/pkg/model"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,12 +13,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetFollowing(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
-	return mongoDB.Followings.Find(ctx, bson.M{"userID": userID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
+func GetFollowings(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Followings.Find(ctx, bson.M{"userID": oID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
 }
 
-func GetPotentialFollowing(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
-	return mongoDB.Followings.Find(ctx, bson.M{"userID": userID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
+func GetFollowers(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Followings.Find(ctx, bson.M{"followingID": oID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
+}
+
+func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Followings.Aggregate(ctx, mongo.Pipeline{bson.D{{Key: "$match", Value: bson.M{"userID": oID}}}}, options.Aggregate().SetMaxTime(2*time.Second))
 }
 
 func AddFollowing(following model.Following) error {
@@ -35,7 +52,7 @@ func AddFollowing(following model.Following) error {
 		if err != nil {
 			return nil, err
 		}
-		res1, err := mongoDB.Followings.InsertOne(ctx, bson.M{"userID": userOID, "followingID": followingOID, "created": following.Created})
+		res1, err := mongoDB.Followings.InsertOne(ctx, bson.M{"userID": userOID, "followingID": followingOID, "lastModified":time.Now()})
 		if err != nil {
 			return res1, err
 		}

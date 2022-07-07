@@ -222,3 +222,34 @@ go run cmd/main.go
   }
 }
 ```
+
+### followings
+
+#### Validator
+
+```
+{
+  $jsonSchema: {
+    bsonType: 'object',
+    required: [
+      'userID',
+      'followingID',
+      'lastModified'
+    ],
+    properties: {
+      userID: {
+        bsonType: 'objectId',
+        description: 'must be a valid userID'
+      },
+      followingID: {
+        bsonType: 'objectId',
+        description: 'must be a valid userID'
+      },
+      lastModified: {
+        bsonType: 'date',
+        description: 'must be a valid date'
+      }
+    }
+  }
+}
+```

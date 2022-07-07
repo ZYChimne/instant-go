@@ -44,7 +44,7 @@ func Create() {
 	friendRouterGroup.GET("get", api.GetFollowings)
 	friendRouterGroup.POST("add", api.AddFollowing)
 	friendRouterGroup.DELETE("remove", api.RemoveFollowing)
-	friendRouterGroup.GET("potential", api.GetPotentialFollowing)
+	friendRouterGroup.GET("potential", api.GetPotentialFollowings)
 	// Profile
 	profileRouterGroup:=r.Group("profile").Use(auth())
 	profileRouterGroup.GET("", api.GetUserInfo)
