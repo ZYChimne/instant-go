@@ -69,12 +69,12 @@ func AddFollowing(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
 		}
 		following.UserID = userID.(string)
-		result, err := database.AddFollowing(following)
+		err := database.AddFollowing(following)
 		if err != nil {
 			log.Panic("Post instant error ", err.Error())
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"code": http.StatusAccepted, "data": result.InsertedID, "message": "accepted",
+			"code": http.StatusAccepted, "message": "accepted",
 		})
 	}
 }
@@ -88,12 +88,12 @@ func RemoveFollowing(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
 		}
 		following.UserID = userID.(string)
-		result, err := database.RemoveFollowing(following)
+		err := database.RemoveFollowing(following)
 		if err != nil {
 			log.Panic("Post instant error ", err.Error())
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"code": http.StatusAccepted, "data": result.DeletedCount, "message": "accepted",
+			"code": http.StatusAccepted, "message": "accepted",
 		})
 	}
 }
