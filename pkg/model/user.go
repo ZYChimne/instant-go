@@ -23,4 +23,6 @@ type User struct {
 	Introduction string    `json:"introduction"`
 	CoverPhoto   int       `json:"coverPhoto"`
 	Tags         []string  `json:"tags"`
+	Followings   int	   `json:"followings"`
+	Followers    int	   `json:"followers"`
 }

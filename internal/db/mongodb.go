@@ -17,9 +17,9 @@ func ConnectMongoDB() {
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
-		log.Fatal("Connect MongoDB error ",err)
+		log.Fatal("Connect MongoDB error ", err)
 		return
 	}
 	database := client.Database("instant")
-	mongoDB = &model.MongoDB{Client:client, Users: database.Collection("users"), Instants: database.Collection("instants"), Comments: database.Collection("comments"), Followings: database.Collection("followings"), Likes: database.Collection("likes")}
+	mongoDB = &model.MongoDB{Client: client, Users: database.Collection("users"), Instants: database.Collection("instants"), Comments: database.Collection("comments"), Followings: database.Collection("followings"), Likes: database.Collection("likes")}
 }
