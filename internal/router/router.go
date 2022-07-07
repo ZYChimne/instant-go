@@ -47,7 +47,7 @@ func Create() {
 	friendRouterGroup.GET("potential", api.GetPotentialFollowing)
 	// Profile
 	profileRouterGroup:=r.Group("profile").Use(auth())
-	profileRouterGroup.GET("get", api.GetUserInfo)
+	profileRouterGroup.GET("", api.GetUserInfo)
 	r.Run(":8081")
 }
 

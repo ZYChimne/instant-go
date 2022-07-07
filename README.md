@@ -51,7 +51,9 @@ go run cmd/main.go
       'myMode',
       'introduction',
       'coverPhoto',
-      'tags'
+      'tags',
+      'followings',
+      'followers'
     ],
     properties: {
       mailbox: {
@@ -152,6 +154,57 @@ go run cmd/main.go
         minItems: 0,
         maxItems: 10,
         description: 'must be in length [0, 256]'
+      },
+      followings: {
+        bsonType: 'int',
+        minimum: 0,
+        description: 'must be greater than 0'
+      },
+      followers: {
+        bsonType: 'int',
+        minimum: 0,
+        description: 'must be greater than 0'
+      }
+    }
+  }
+}
+```
+
+### Instants
+
+#### Validator
+
+```
+{
+  $jsonSchema: {
+    bsonType: 'object',
+    required: [
+      'userID',
+      'created',
+      'lastModified',
+      'content'
+    ],
+    properties: {
+      userID: {
+        bsonType: 'objectId',
+        description: 'must be a valid userID'
+      },
+      created: {
+        bsonType: 'date',
+        description: 'must be a valid date'
+      },
+      lastModified: {
+        bsonType: 'date',
+        description: 'must be a valid date'
+      },
+      content: {
+        bsonType: 'string',
+        maxLength: 256,
+        description: 'must be in length [0, 256]'
+      },
+      refOriginID: {
+        bsonType: 'objectId',
+        description: 'must be a valid refOriginID'
       }
     }
   }

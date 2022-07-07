@@ -25,7 +25,7 @@ func Register(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusCreated, "message": "Register success"})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusCreated})
 }
 
 func GetToken(c *gin.Context) {
@@ -56,7 +56,7 @@ func GetToken(c *gin.Context) {
 	}
 	token := util.GenerateJwt(user.UserID)
 	if err := database.RedisClient.Set(ctx, key, token, 0).Err(); err != nil {
-		log.Println("Redis error: ", err.Error())
+		log.Println("Redis error ", err.Error())
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": token, "message": "ok"})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": token})
 }
