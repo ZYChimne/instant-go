@@ -55,7 +55,7 @@ func Create() {
 
 func auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("auth is running")
+		// log.Println("auth is running")
 		token := c.GetHeader("Authentication")
 		userID, err := util.VerifyJwt(token)
 		if err != nil {

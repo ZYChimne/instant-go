@@ -34,7 +34,7 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Followings.Aggregate(ctx, mongo.Pipeline{bson.D{{Key: "$match", Value: bson.M{"userID": oID}}}}, options.Aggregate().SetMaxTime(2*time.Second))
+	return mongoDB.Followings.Aggregate(ctx, mongo.Pipeline{bson.D{{Key: "$match", Value: bson.M{"followingID":oID, "userID": bson.M{"$ne":oID}}}}}, options.Aggregate().SetMaxTime(2*time.Second))
 }
 
 func GetAllUsers(index int64, pageSize int64) (*mongo.Cursor, error) {

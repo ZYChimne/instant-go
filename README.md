@@ -14,6 +14,10 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 ```bash
 sudo service redis-server start
 go run cmd/main.go
+golines -w
+```
+```
+$env:GOPROXY = "https://proxy.golang.com.cn,direct"
 ```
 
 ## TODO
