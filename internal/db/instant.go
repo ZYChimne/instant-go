@@ -17,7 +17,11 @@ func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, err
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.Find(ctx, bson.M{"userID": oID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
+	return mongoDB.Instants.Find(
+		ctx,
+		bson.M{"userID": oID},
+		options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize),
+	)
 }
 
 func PostInstant(instant model.Instant) error {
@@ -31,7 +35,17 @@ func PostInstant(instant model.Instant) error {
 		if err != nil {
 			return nil, err
 		}
-		mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content, "likes": 0, "shares": 0})
+		mongoDB.Instants.InsertOne(
+			ctx,
+			bson.M{
+				"userID":       oID,
+				"created":      time.Now(),
+				"lastModified": time.Now(),
+				"content":      instant.Content,
+				"likes":        0,
+				"shares":       0,
+			},
+		)
 		return nil, nil
 	}
 	_, err = session.WithTransaction(ctx, callback)
@@ -47,7 +61,14 @@ func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID, "userID": userOID}, bson.M{"$set": bson.M{"content": instant.Content}, "$currentDate": bson.M{"lastModified": true}})
+	return mongoDB.Instants.UpdateOne(
+		ctx,
+		bson.M{"_id": instantOID, "userID": userOID},
+		bson.M{
+			"$set":         bson.M{"content": instant.Content},
+			"$currentDate": bson.M{"lastModified": true},
+		},
+	)
 }
 
 func LikeInstant(like model.Like) error {
@@ -65,11 +86,23 @@ func LikeInstant(like model.Like) error {
 		if err != nil {
 			return nil, err
 		}
-		res1, err := mongoDB.Likes.UpdateOne(ctx, bson.M{"insID": instantOID}, bson.M{"$set": bson.M{"useID": userOID, "attitude": like.Attitude}, "$currentDate": bson.M{"lastModified": true}}, options.Update().SetUpsert(true))
+		res1, err := mongoDB.Likes.UpdateOne(
+			ctx,
+			bson.M{"insID": instantOID},
+			bson.M{
+				"$set":         bson.M{"useID": userOID, "attitude": like.Attitude},
+				"$currentDate": bson.M{"lastModified": true},
+			},
+			options.Update().SetUpsert(true),
+		)
 		if err != nil {
 			return res1, nil
 		}
-		res2, err := mongoDB.Instants.UpdateOne(ctx, bson.M{"_id": instantOID}, bson.M{"$inc": bson.M{"likes": 1}})
+		res2, err := mongoDB.Instants.UpdateOne(
+			ctx,
+			bson.M{"_id": instantOID},
+			bson.M{"$inc": bson.M{"likes": 1}},
+		)
 		if err != nil {
 			return res2, nil
 		}
@@ -91,5 +124,13 @@ func ShareInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": userOID, "created": time.Now(), "content": instant.Content, "refOriginID": instantOID})
+	return mongoDB.Instants.InsertOne(
+		ctx,
+		bson.M{
+			"userID":      userOID,
+			"created":     time.Now(),
+			"content":     instant.Content,
+			"refOriginID": instantOID,
+		},
+	)
 }

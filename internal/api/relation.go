@@ -16,14 +16,20 @@ func GetFollowings(c *gin.Context) {
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
 		log.Println("Parse index err ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	followings := []model.Following{}
 	rows, err := database.GetFollowings(userID.(string), index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	defer rows.Close(ctx)
@@ -32,14 +38,20 @@ func GetFollowings(c *gin.Context) {
 		err := rows.Decode(&following)
 		if err != nil {
 			log.Println("Database error ", err.Error())
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
 			return
 		}
 		followings = append(followings, following)
 	}
 	if err := rows.Err(); err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": followings})
@@ -51,14 +63,20 @@ func GetFollowers(c *gin.Context) {
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
 		log.Println("Parse index err ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	followers := []model.Following{}
 	rows, err := database.GetFollowers(userID.(string), index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	defer rows.Close(ctx)
@@ -67,14 +85,20 @@ func GetFollowers(c *gin.Context) {
 		err := rows.Decode(&follower)
 		if err != nil {
 			log.Println("Database error ", err.Error())
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
 			return
 		}
 		followers = append(followers, follower)
 	}
 	if err := rows.Err(); err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": followers})
@@ -126,14 +150,20 @@ func GetAllUsers(c *gin.Context) {
 	errMsg := "Get all users error"
 	if err != nil {
 		log.Println("Parse index error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	users := []model.User{}
 	rows, err := database.GetAllUsers(index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	defer rows.Close(ctx)
@@ -142,14 +172,20 @@ func GetAllUsers(c *gin.Context) {
 		err := rows.Decode(&user)
 		if err != nil {
 			log.Println("Database error ", err.Error())
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
 			return
 		}
 		users = append(users, user)
 	}
 	if err := rows.Err(); err != nil {
 		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
@@ -160,7 +196,10 @@ func AddFollowing(c *gin.Context) {
 	var following model.Following
 	if err := c.Bind(&following); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
+		c.JSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"},
+		)
 	}
 	following.UserID = userID.(string)
 	err := database.AddFollowing(following)
@@ -177,7 +216,10 @@ func RemoveFollowing(c *gin.Context) {
 	var following model.Following
 	if err := c.Bind(&following); err != nil {
 		log.Fatal("Bind json failed ", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
+		c.JSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"},
+		)
 	}
 	following.UserID = userID.(string)
 	err := database.RemoveFollowing(following)

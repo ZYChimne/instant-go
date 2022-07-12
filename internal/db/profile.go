@@ -9,7 +9,7 @@ import (
 
 func GetUserInfo(user *model.User) error {
 	oID, err := primitive.ObjectIDFromHex(user.UserID)
-	if err!=nil{
+	if err != nil {
 		return nil
 	}
 	return mongoDB.Users.FindOne(ctx, bson.M{"_id": oID}).Decode(&user)

@@ -16,13 +16,19 @@ func Register(c *gin.Context) {
 	errMsg := "Register error"
 	if err := c.Bind(&user); err != nil {
 		log.Println("Bind json failed ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	result, err := database.Register(user)
 	if err != nil {
 		log.Println("Database result:, error: ", result, err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusCreated})
@@ -33,7 +39,10 @@ func GetToken(c *gin.Context) {
 	errMsg := "Please check if your account or password is correct"
 	if err := c.Bind(&user); err != nil {
 		log.Println("Bind json failed ", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "Get token error"})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": "Get token error"},
+		)
 		return
 	}
 	key := strings.Join([]string{"token", user.MailBox, user.Password}, ":")
@@ -46,12 +55,18 @@ func GetToken(c *gin.Context) {
 	password := user.Password
 	if err := database.GetUser(user.MailBox, &user); err != nil {
 		log.Println("Database error: ", err.Error())
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": http.StatusForbidden, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusForbidden,
+			gin.H{"code": http.StatusForbidden, "message": errMsg},
+		)
 		return
 	}
 	if !util.CheckPasswordHash(password, user.Password) {
 		log.Println("Password error")
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": http.StatusForbidden, "message": errMsg})
+		c.AbortWithStatusJSON(
+			http.StatusForbidden,
+			gin.H{"code": http.StatusForbidden, "message": errMsg},
+		)
 		return
 	}
 	token := util.GenerateJwt(user.UserID)

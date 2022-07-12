@@ -37,7 +37,15 @@ func Echo(c *gin.Context) {
 		if err != nil {
 			log.Println(err.Error())
 		}
-		chatResponse = model.ChatResponse{ChatID: "abc", Created: time.Now(), From: chatRequest.From, Group: chatRequest.Group, Type: 0, LocalMsgSeq: chatRequest.LocalMsgSeq, Content: ""}
+		chatResponse = model.ChatResponse{
+			ChatID:      "abc",
+			Created:     time.Now(),
+			From:        chatRequest.From,
+			Group:       chatRequest.Group,
+			Type:        0,
+			LocalMsgSeq: chatRequest.LocalMsgSeq,
+			Content:     "",
+		}
 		msg, err = json.Marshal(&chatResponse)
 		if err != nil {
 			log.Println(err.Error())
@@ -46,7 +54,15 @@ func Echo(c *gin.Context) {
 		if err = conn.WriteMessage(msgType, msg); err != nil {
 			log.Println(err.Error())
 		}
-		chatResponse = model.ChatResponse{ChatID: "abc", Created: time.Now(), From: chatRequest.From, Group: chatRequest.Group, Type: 1, LocalMsgSeq: chatRequest.LocalMsgSeq, Content: chatRequest.Content}
+		chatResponse = model.ChatResponse{
+			ChatID:      "abc",
+			Created:     time.Now(),
+			From:        chatRequest.From,
+			Group:       chatRequest.Group,
+			Type:        1,
+			LocalMsgSeq: chatRequest.LocalMsgSeq,
+			Content:     chatRequest.Content,
+		}
 		msg, err = json.Marshal(&chatResponse)
 		if err != nil {
 			log.Println(err.Error())

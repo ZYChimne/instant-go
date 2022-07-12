@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Instant struct {
-	InsID        string    `json:"insID" bson:"_id"`
+	InsID        string    `json:"insID"        bson:"_id"`
 	UserID       string    `json:"userID"`
 	Created      time.Time `json:"created"`
 	LastModified time.Time `json:"lastModified"`

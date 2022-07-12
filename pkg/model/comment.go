@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Comment struct {
-	CommentID    string    `json:"commentID" bson:"_id"`
+	CommentID    string    `json:"commentID"    bson:"_id"`
 	Created      time.Time `json:"created"`
 	LastModified time.Time `json:"lastModified"`
 	InsID        string    `json:"insID"`

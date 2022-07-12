@@ -14,7 +14,32 @@ func Register(user model.User) (*mongo.InsertOneResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Users.InsertOne(ctx, bson.M{"mailbox": user.MailBox, "phone": user.Phone, "username": user.Username, "password": hash, "created": time.Now(), "lastModified": time.Now(),"avatar": user.Avatar, "gender": user.Gender, "country": user.Country, "province": user.Province, "city": user.City, "birthday": user.Birthday, "school": user.School, "company": user.Company, "job": user.Job, "myMode": user.MyMode, "introduction": user.Introduction, "coverPhoto": user.CoverPhoto, "tags": user.Tags, "followings":0, "followers":0})
+	return mongoDB.Users.InsertOne(
+		ctx,
+		bson.M{
+			"mailbox":      user.MailBox,
+			"phone":        user.Phone,
+			"username":     user.Username,
+			"password":     hash,
+			"created":      time.Now(),
+			"lastModified": time.Now(),
+			"avatar":       user.Avatar,
+			"gender":       user.Gender,
+			"country":      user.Country,
+			"province":     user.Province,
+			"city":         user.City,
+			"birthday":     user.Birthday,
+			"school":       user.School,
+			"company":      user.Company,
+			"job":          user.Job,
+			"myMode":       user.MyMode,
+			"introduction": user.Introduction,
+			"coverPhoto":   user.CoverPhoto,
+			"tags":         user.Tags,
+			"followings":   0,
+			"followers":    0,
+		},
+	)
 }
 
 func GetUser(mailbox string, user *model.User) error {

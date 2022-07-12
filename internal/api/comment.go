@@ -14,7 +14,7 @@ func GetComments(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
-	if userID != "" && err == nil  {
+	if userID != "" && err == nil {
 		comments := make([]model.Comment, pageSize)
 		rows, err := database.GetComments(insID, index, pageSize)
 		if err != nil {
@@ -40,7 +40,7 @@ func GetComments(c *gin.Context) {
 
 func PostComment(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	if userID !="" {
+	if userID != "" {
 		var comment model.Comment
 		if err := c.Bind(&comment); err != nil {
 			log.Panic("Bind json failed ", err.Error())
