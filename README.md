@@ -58,7 +58,6 @@ go run cmd/main.go
         bsonType: 'string',
         pattern: '[a-zA-Z]+@[a-zA-Z]+.[a-zA-Z]+',
         maxLength: 64,
-        uniqueItems: true,
         description: 'must be a valid email address'
       },
       phone: {
@@ -66,7 +65,6 @@ go run cmd/main.go
         maxLength: 11,
         minLength: 10,
         pattern: '^[0-9]+$',
-        uniqueItems: true,
         description: 'must be a valid phone number'
       },
       username: {
@@ -241,7 +239,7 @@ go run cmd/main.go
       },
       followingID: {
         bsonType: 'objectId',
-        description: 'must be a valid userID'
+        description: 'must be a valid followingID'
       },
       lastModified: {
         bsonType: 'date',

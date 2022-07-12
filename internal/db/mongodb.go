@@ -21,5 +21,5 @@ func ConnectMongoDB() {
 		return
 	}
 	database := client.Database("instant")
-	mongoDB = &model.MongoDB{Client: client, Users: database.Collection("users"), Instants: database.Collection("instants"), Comments: database.Collection("comments"), Followings: database.Collection("followings"), Likes: database.Collection("likes")}
+	mongoDB = &model.MongoDB{Client: client, Users: database.Collection("users"), Instants: database.Collection("instants"), Feeds: database.Collection("feeds"), Comments: database.Collection("comments"), Followings: database.Collection("followings"), Likes: database.Collection("likes")}
 }

@@ -20,12 +20,22 @@ func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, err
 	return mongoDB.Instants.Find(ctx, bson.M{"userID": oID}, options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize))
 }
 
-func PostInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
-	oID, err := primitive.ObjectIDFromHex(instant.UserID)
+func PostInstant(instant model.Instant) error {
+	session, err := mongoDB.Client.StartSession()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content, "likes": 0, "shares": 0})
+	defer session.EndSession(ctx)
+	callback := func(sessionCtx mongo.SessionContext) (interface{}, error) {
+		oID, err := primitive.ObjectIDFromHex(instant.UserID)
+		if err != nil {
+			return nil, err
+		}
+		mongoDB.Instants.InsertOne(ctx, bson.M{"userID": oID, "created": time.Now(), "lastModified": time.Now(), "content": instant.Content, "likes": 0, "shares": 0})
+		return nil, nil
+	}
+	_, err = session.WithTransaction(ctx, callback)
+	return err
 }
 
 func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {

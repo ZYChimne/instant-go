@@ -121,40 +121,70 @@ func GetPotentialFollowings(c *gin.Context) {
 	// c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": followings})
 }
 
+func GetAllUsers(c *gin.Context) {
+	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
+	errMsg := "Get all users error"
+	if err != nil {
+		log.Println("Parse index error ", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		return
+	}
+	users := []model.User{}
+	rows, err := database.GetAllUsers(index, pageSize)
+	if err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		return
+	}
+	defer rows.Close(ctx)
+	for rows.Next(ctx) {
+		var user model.User
+		err := rows.Decode(&user)
+		if err != nil {
+			log.Println("Database error ", err.Error())
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+			return
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
+}
+
 func AddFollowing(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	if userID != "" {
-		var following model.Following
-		if err := c.Bind(&following); err != nil {
-			log.Fatal("Bind json failed ", err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
-		}
-		following.UserID = userID.(string)
-		err := database.AddFollowing(following)
-		if err != nil {
-			log.Panic("Post instant error ", err.Error())
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"code": http.StatusAccepted, "message": "accepted",
-		})
+	var following model.Following
+	if err := c.Bind(&following); err != nil {
+		log.Fatal("Bind json failed ", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
 	}
+	following.UserID = userID.(string)
+	err := database.AddFollowing(following)
+	if err != nil {
+		log.Panic("Post instant error ", err.Error())
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusAccepted, "message": "accepted",
+	})
 }
 
 func RemoveFollowing(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	if userID != "" {
-		var following model.Following
-		if err := c.Bind(&following); err != nil {
-			log.Fatal("Bind json failed ", err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
-		}
-		following.UserID = userID.(string)
-		err := database.RemoveFollowing(following)
-		if err != nil {
-			log.Panic("Post instant error ", err.Error())
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"code": http.StatusAccepted, "message": "accepted",
-		})
+	var following model.Following
+	if err := c.Bind(&following); err != nil {
+		log.Fatal("Bind json failed ", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "data": err.Error(), "message": "ok"})
 	}
+	following.UserID = userID.(string)
+	err := database.RemoveFollowing(following)
+	if err != nil {
+		log.Panic("Post instant error ", err.Error())
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusAccepted, "message": "accepted",
+	})
 }

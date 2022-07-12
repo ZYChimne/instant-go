@@ -39,14 +39,16 @@ func Create() {
 	commentRouterGroup.POST("", api.PostComment)
 	// commentRouterGroup.POST("like", api.LikeComment)
 	// commentRouterGroup.POST("share", api.ShareComment)
-	// Friend
-	friendRouterGroup:=r.Group("friend").Use(auth())
-	friendRouterGroup.GET("get", api.GetFollowings)
-	friendRouterGroup.POST("add", api.AddFollowing)
-	friendRouterGroup.DELETE("remove", api.RemoveFollowing)
-	friendRouterGroup.GET("potential", api.GetPotentialFollowings)
+	// Relation
+	relationRouterGroup := r.Group("relation").Use(auth())
+	relationRouterGroup.GET("followings", api.GetFollowings)
+	relationRouterGroup.GET("followers", api.GetFollowings)
+	relationRouterGroup.GET("potential", api.GetPotentialFollowings)
+	relationRouterGroup.GET("all", api.GetAllUsers)
+	relationRouterGroup.POST("", api.AddFollowing)
+	relationRouterGroup.DELETE("", api.RemoveFollowing)
 	// Profile
-	profileRouterGroup:=r.Group("profile").Use(auth())
+	profileRouterGroup := r.Group("profile").Use(auth())
 	profileRouterGroup.GET("", api.GetUserInfo)
 	r.Run(":8081")
 }
@@ -58,7 +60,7 @@ func auth() gin.HandlerFunc {
 		userID, err := util.VerifyJwt(token)
 		if err != nil {
 			log.Println(err.Error())
-			c.AbortWithStatus(http.StatusUnauthorized);
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		c.Set("UserID", userID)

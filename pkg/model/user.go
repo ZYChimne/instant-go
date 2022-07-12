@@ -20,7 +20,7 @@ type User struct {
 	Company      string    `json:"company"`
 	Job          string    `json:"job"`
 	MyMode       int       `json:"myMode"`
-	Introduction string    `json:"introduction"`
+	Introduction string    `json:"introduction		"`
 	CoverPhoto   int       `json:"coverPhoto"`
 	Tags         []string  `json:"tags"`
 	Followings   int	   `json:"followings"`

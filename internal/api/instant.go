@@ -55,7 +55,7 @@ func PostInstant(c *gin.Context) {
 		return
 	}
 	instant.UserID = userID.(string)
-	_, err := database.PostInstant(instant)
+	err := database.PostInstant(instant)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
