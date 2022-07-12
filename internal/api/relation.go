@@ -105,44 +105,50 @@ func GetFollowers(c *gin.Context) {
 }
 
 func GetPotentialFollowings(c *gin.Context) {
-	// userID := c.MustGet("UserID")
-	// errMsg := "Get potential following error"
-	// index, err := strconv.ParseInt(c.Query("index"), 10, 64)
-	// if err != nil {
-	// 	log.Println("Parse index error ", err.Error())
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-	// 	return
-	// }
-	// followingOIDs := []primitive.ObjectID{}
-	// rows, err := database.GetFollowings(userID.(string), index, math.MaxInt64)
-	// if err != nil {
-	// 	log.Println("Database error ", err.Error())
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-	// 	return
-	// }
-	// defer rows.Close(ctx)
-	// for rows.Next(ctx) {
-	// 	var following model.Following
-	// 	err := rows.Decode(&following)
-	// 	if err != nil {
-	// 		log.Println("Database error ", err.Error())
-	// 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-	// 		return
-	// 	}
-	// 	followingOID,err :=primitive.ObjectIDFromHex(following.FollowingID)
-	// 	if err != nil {
-	// 		log.Println("Database error ", err.Error())
-	// 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-	// 		return
-	// 	}
-	// 	followingOIDs = append(followingOIDs, followingOID)
-	// }
-	// if err := rows.Err(); err != nil {
-	// 	log.Println("Database error ", err.Error())
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": errMsg})
-	// 	return
-	// }
-	// c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": followings})
+	userID := c.MustGet("UserID")
+	errMsg := "Get potential following error"
+	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
+	if err != nil {
+		log.Println("Parse index error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	users := []model.User{}
+	rows, err := database.GetPotentialFollowings(userID.(string), index, pageSize)
+	if err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	defer rows.Close(ctx)
+	for rows.Next(ctx) {
+		var user model.User
+		err := rows.Decode(&user)
+		if err != nil {
+			log.Println("Database error ", err.Error())
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
+			return
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 }
 
 func GetAllUsers(c *gin.Context) {
