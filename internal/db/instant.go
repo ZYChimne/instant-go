@@ -24,19 +24,28 @@ func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, err
 				{Key: "$match", Value: bson.M{"userID": oID}},
 			},
 			bson.D{{Key: "$unwind", Value: "$instants"}},
+			bson.D{{Key: "$sort", Value: bson.M{"instants.insID": -1}}},
 			bson.D{{Key: "$skip", Value: index}},
 			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
 				Key: "$lookup",
 				Value: bson.M{
 					"from":         "instants",
-					"localField":   "instants",
+					"localField":   "instants.insID",
 					"foreignField": "_id",
 					"as":           "feeds",
 				},
 			}},
-			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$feeds"}}}},
-		},
+			bson.D{
+				{
+					Key: "$replaceRoot",
+					Value: bson.M{
+						"newRoot": bson.M{
+							"$mergeObjects": bson.A{bson.M{"$first": "$feeds"}, "$instants"},
+						},
+					},
+				},
+			}},
 		options.Aggregate().SetMaxTime(time.Second*2),
 	)
 }
@@ -78,7 +87,6 @@ func PostInstant(instant model.Instant) error {
 		if err != nil {
 			return res1, nil
 		}
-		var followerOIDs []primitive.ObjectID
 		rows, err := mongoDB.Followings.Find(
 			ctx,
 			bson.M{"followingID": oID},
@@ -88,16 +96,25 @@ func PostInstant(instant model.Instant) error {
 		}
 		defer rows.Close(ctx)
 		for rows.Next(ctx) {
-			followerOIDs = append(followerOIDs, rows.Current.Lookup("userID").ObjectID())
+			res2, err := mongoDB.Feeds.UpdateOne(
+				ctx,
+				bson.M{"userID": rows.Current.Lookup("userID").ObjectID()},
+				bson.M{
+					"$push": bson.M{"instants": bson.M{"insID": res1.InsertedID, "attitude": 0}},
+				},
+				options.Update().SetUpsert(true),
+			)
+			if err != nil {
+				return res2, nil
+			}
 		}
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
-		// followerOIDs = append(followerOIDs, oID)
-		res2, err := mongoDB.Feeds.UpdateMany(
+		res2, err := mongoDB.Feeds.UpdateOne(
 			ctx,
-			bson.M{"userID": bson.M{"$in": followerOIDs}},
-			bson.M{"$push": bson.M{"instants": bson.M{"insID":res1.InsertedID, "Attitude":0}}},
+			bson.M{"userID": oID},
+			bson.M{"$push": bson.M{"instants": bson.M{"insID": res1.InsertedID, "attitude": 0}}},
 			options.Update().SetUpsert(true),
 		)
 		if err != nil {

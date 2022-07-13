@@ -11,4 +11,5 @@ type Instant struct {
 	RefOriginID  string    `json:"refOriginID"`
 	Likes        int       `json:"likes"`
 	Shares       int       `json:"shares"`
+	Attitude     int       `json:"attitude"`
 }
