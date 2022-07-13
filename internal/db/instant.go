@@ -17,6 +17,35 @@ func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, err
 	if err != nil {
 		return nil, err
 	}
+	return mongoDB.Feeds.Aggregate(
+		ctx,
+		mongo.Pipeline{
+			bson.D{
+				{Key: "$match", Value: bson.M{"userID": oID}},
+			},
+			bson.D{{Key: "$unwind", Value: "$instants"}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
+			bson.D{{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "instants",
+					"localField":   "instants",
+					"foreignField": "_id",
+					"as":           "feeds",
+				},
+			}},
+			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$feeds"}}}},
+		},
+		options.Aggregate().SetMaxTime(time.Second*2),
+	)
+}
+
+func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
 	return mongoDB.Instants.Find(
 		ctx,
 		bson.M{"userID": oID},
@@ -35,7 +64,7 @@ func PostInstant(instant model.Instant) error {
 		if err != nil {
 			return nil, err
 		}
-		mongoDB.Instants.InsertOne(
+		res1, err := mongoDB.Instants.InsertOne(
 			ctx,
 			bson.M{
 				"userID":       oID,
@@ -46,6 +75,34 @@ func PostInstant(instant model.Instant) error {
 				"shares":       0,
 			},
 		)
+		if err != nil {
+			return res1, nil
+		}
+		var followerOIDs []primitive.ObjectID
+		rows, err := mongoDB.Followings.Find(
+			ctx,
+			bson.M{"followingID": oID},
+		)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close(ctx)
+		for rows.Next(ctx) {
+			followerOIDs = append(followerOIDs, rows.Current.Lookup("userID").ObjectID())
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		// followerOIDs = append(followerOIDs, oID)
+		res2, err := mongoDB.Feeds.UpdateMany(
+			ctx,
+			bson.M{"userID": bson.M{"$in": followerOIDs}},
+			bson.M{"$push": bson.M{"instants": bson.M{"insID":res1.InsertedID, "Attitude":0}}},
+			options.Update().SetUpsert(true),
+		)
+		if err != nil {
+			return res2, nil
+		}
 		return nil, nil
 	}
 	_, err = session.WithTransaction(ctx, callback)

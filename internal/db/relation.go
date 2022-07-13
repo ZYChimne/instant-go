@@ -48,6 +48,7 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 			bson.D{
 				{Key: "$match", Value: bson.M{"followingID": oID, "userID": bson.M{"$ne": oID}}},
 			},
+			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
 			bson.D{{
 				Key: "$lookup",
 				Value: bson.M{
@@ -58,6 +59,8 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 				},
 			}},
 			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
 		},
 		options.Aggregate().SetMaxTime(2*time.Second),
 	)

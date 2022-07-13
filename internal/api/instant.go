@@ -57,6 +57,53 @@ func GetInstants(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
 }
 
+func GetMyInstants(c *gin.Context) {
+	userID := c.MustGet("UserID")
+	errMsg := "Get instants error"
+	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
+	if err != nil {
+		log.Println("Parse index error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	instants := []model.Instant{}
+	rows, err := database.GetMyInstants(userID.(string), index, pageSize)
+	if err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	defer rows.Close(ctx)
+	for rows.Next(ctx) {
+		var instant model.Instant
+		err := rows.Decode(&instant)
+		if err != nil {
+			log.Println("Database Decode error ", err.Error())
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
+			return
+		}
+		instants = append(instants, instant)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
+}
+
 func PostInstant(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	errMsg := "Post instant error"
