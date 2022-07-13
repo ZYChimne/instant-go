@@ -55,10 +55,40 @@ func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, e
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Instants.Find(
+	return mongoDB.Instants.Aggregate(
 		ctx,
-		bson.M{"userID": oID},
-		options.Find().SetSort(bson.M{"_id": -1}).SetSkip(index).SetLimit(pageSize),
+		mongo.Pipeline{
+			bson.D{
+				{Key: "$match", Value: bson.M{"userID": oID}},
+			},
+			bson.D{{Key: "$sort", Value: bson.M{"instants.insID": -1}}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
+			bson.D{{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "likes",
+					"localField":   "_id",
+					"foreignField": "insID",
+					"as":           "likes",
+					"pipeLine": bson.A{
+						bson.D{
+							{Key: "$match", Value: bson.M{"userID": oID}},
+						},
+					},
+				},
+			}},
+			bson.D{
+				{
+					Key: "$replaceRoot",
+					Value: bson.M{
+						"newRoot": bson.M{
+							"$mergeObjects": bson.A{bson.M{"$first": "$feeds"}, "$instants"},
+						},
+					},
+				},
+			}},
+		options.Aggregate().SetMaxTime(time.Second*2),
 	)
 }
 
@@ -179,6 +209,14 @@ func LikeInstant(like model.Like) error {
 		)
 		if err != nil {
 			return res2, nil
+		}
+		res3, err := mongoDB.Feeds.UpdateOne(
+			ctx,
+			bson.M{"userID": userOID, "instants.insID": instantOID},
+			bson.M{"$set": bson.M{"instants.$.attitude": like.Attitude}},
+		)
+		if err != nil {
+			return res3, err
 		}
 		if (res1.UpsertedCount+res1.ModifiedCount != 1) || res2.ModifiedCount == 0 {
 			return nil, errors.New(strings.Join([]string{"", "instant not found"}, " "))
