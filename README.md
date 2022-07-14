@@ -12,13 +12,15 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 ## Project setup
 
 ```bash
-sudo service redis-server start
+sudo service redis-server start #   wsl
 go run cmd/main.go
 gofmt ./ -w
 golines ./ -w
 ```
 ```
 $env:GOPROXY = "https://proxy.golang.com.cn,direct"
+set http_proxy=socks5://127.0.0.1:7890
+set https_proxy=%http_proxy%
 ```
 
 ## TODO

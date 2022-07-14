@@ -93,20 +93,27 @@ func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, e
 }
 
 func PostInstant(instant model.Instant) error {
+	oID, err := primitive.ObjectIDFromHex(instant.UserID)
+	if err != nil {
+		return err
+	}
+	var user model.User
+	err = mongoDB.Users.FindOne(ctx, bson.M{"_id": oID}).Decode(&user)
+	if err != nil {
+		return err
+	}
 	session, err := mongoDB.Client.StartSession()
 	if err != nil {
 		return err
 	}
 	defer session.EndSession(ctx)
 	callback := func(sessionCtx mongo.SessionContext) (interface{}, error) {
-		oID, err := primitive.ObjectIDFromHex(instant.UserID)
-		if err != nil {
-			return nil, err
-		}
 		res1, err := mongoDB.Instants.InsertOne(
 			ctx,
 			bson.M{
 				"userID":       oID,
+				"username":     user.Username,
+				"avatar":       user.Avatar,
 				"created":      time.Now(),
 				"lastModified": time.Now(),
 				"content":      instant.Content,
