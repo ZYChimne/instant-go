@@ -13,8 +13,12 @@ import (
 
 func GetUserInfo(c *gin.Context) {
 	userID := c.MustGet("UserID")
+	targetID := c.Query("userID")
+	if targetID == "" {
+		targetID = userID.(string)
+	}
 	errMsg := "Get userinfo error"
-	key := strings.Join([]string{"profile", userID.(string)}, ":")
+	key := strings.Join([]string{"profile",targetID}, ":")
 	var user model.User
 	if info, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
 		log.Println(errMsg, " ", err.Error())
@@ -27,7 +31,7 @@ func GetUserInfo(c *gin.Context) {
 			return
 		}
 	}
-	user.UserID = userID.(string)
+	user.UserID = targetID
 	err := database.GetUserInfo(&user)
 	if err != nil {
 		log.Println("Database error ", err.Error())

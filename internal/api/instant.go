@@ -57,8 +57,8 @@ func GetInstants(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
 }
 
-func GetMyInstants(c *gin.Context) {
-	userID := c.MustGet("UserID")
+func GetInstantsByUserID(c *gin.Context) {
+	userID := c.Query("userID")
 	errMsg := "Get instants error"
 	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
 	if err != nil {
@@ -70,7 +70,7 @@ func GetMyInstants(c *gin.Context) {
 		return
 	}
 	instants := []model.Instant{}
-	rows, err := database.GetMyInstants(userID.(string), index, pageSize)
+	rows, err := database.GetInstantsByUserID(userID, index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(

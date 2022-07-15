@@ -50,7 +50,7 @@ func GetInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, err
 	)
 }
 
-func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+func GetInstantsByUserID(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
 	oID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return nil, err
