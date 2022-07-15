@@ -70,8 +70,8 @@ func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, e
 					"from":         "likes",
 					"localField":   "_id",
 					"foreignField": "insID",
-					"as":           "likes",
-					"pipeLine": bson.A{
+					"as":           "likeList",
+					"pipeline": bson.A{
 						bson.D{
 							{Key: "$match", Value: bson.M{"userID": oID}},
 						},
@@ -83,7 +83,7 @@ func GetMyInstants(userID string, index int64, pageSize int64) (*mongo.Cursor, e
 					Key: "$replaceRoot",
 					Value: bson.M{
 						"newRoot": bson.M{
-							"$mergeObjects": bson.A{bson.M{"$first": "$feeds"}, "$instants"},
+							"$mergeObjects": bson.A{bson.M{"$first": "$likeList"}, "$$ROOT"},
 						},
 					},
 				},

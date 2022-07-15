@@ -37,6 +37,7 @@ func GetFollowers(userID string, index int64, pageSize int64) (*mongo.Cursor, er
 	)
 }
 
+// Find people who follow me yet I don't follow them
 func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
 	oID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -66,6 +67,7 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 	)
 }
 
+// ONLY FOR DEBUG AND TEST
 func GetAllUsers(index int64, pageSize int64) (*mongo.Cursor, error) {
 	return mongoDB.Users.Find(
 		ctx,
