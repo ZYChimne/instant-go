@@ -70,7 +70,7 @@ func GetToken(c *gin.Context) {
 		return
 	}
 	token := util.GenerateJwt(user.UserID)
-	if err := database.RedisClient.Set(ctx, key, token, 0).Err(); err != nil {
+	if err := database.RedisClient.Set(ctx, key, token, redisExpireTime).Err(); err != nil {
 		log.Println("Redis error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": token})
