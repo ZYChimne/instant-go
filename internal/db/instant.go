@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"log"
 	"strings"
 	"time"
 	"zychimne/instant/pkg/model"
@@ -133,34 +134,81 @@ func PostInstant(instant model.Instant) error {
 		}
 		defer rows.Close(ctx)
 		for rows.Next(ctx) {
-			res2, err := mongoDB.Feeds.UpdateOne(
-				ctx,
-				bson.M{"userID": rows.Current.Lookup("userID").ObjectID()},
-				bson.M{
-					"$push": bson.M{"instants": bson.M{"insID": res1.InsertedID, "attitude": 0}},
-				},
-				options.Update().SetUpsert(true),
+			err = fanOutOnWrite(
+				res1.InsertedID.(primitive.ObjectID),
+				rows.Current.Lookup("userID").ObjectID(),
 			)
 			if err != nil {
-				return res2, nil
+				return nil, err
 			}
 		}
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
-		res2, err := mongoDB.Feeds.UpdateOne(
-			ctx,
-			bson.M{"userID": oID},
-			bson.M{"$push": bson.M{"instants": bson.M{"insID": res1.InsertedID, "attitude": 0}}},
-			options.Update().SetUpsert(true),
-		)
+		err = fanOutOnWrite(res1.InsertedID.(primitive.ObjectID), oID)
 		if err != nil {
-			return res2, nil
+			return nil, err
 		}
 		return nil, nil
 	}
 	_, err = session.WithTransaction(ctx, callback)
 	return err
+}
+
+func fanOutOnWrite(instantOID primitive.ObjectID, userOID primitive.ObjectID) error {
+	rows, err := mongoDB.Feeds.Aggregate(ctx, mongo.Pipeline{
+		bson.D{
+			{Key: "$match", Value: bson.M{"userID": userOID}},
+		},
+		bson.D{{Key: "$limit", Value: 1}},
+		bson.D{
+			{
+				Key: "$project",
+				Value: bson.M{
+					"size": bson.M{
+						"$cond": bson.M{
+							"if":   bson.M{"$isArray": "$instants"},
+							"then": bson.M{"$size": "$instants"},
+							"else": 0,
+						},
+					},
+				},
+			},
+		}},
+		options.Aggregate().SetMaxTime(time.Second*2))
+	if err != nil {
+		return err
+	}
+	defer rows.Close(ctx)
+	for rows.Next(ctx) {
+		size := rows.Current.Lookup("size").Int32()
+		log.Println(size)
+		if size >= maxFeedSize {
+			_, err := mongoDB.Feeds.UpdateOne(
+				ctx,
+				bson.M{"userID": userOID},
+				bson.M{
+					"$pop": bson.M{"instants": -1},
+				},
+				options.Update().SetUpsert(true),
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	_, err = mongoDB.Feeds.UpdateOne(
+		ctx,
+		bson.M{"userID": userOID},
+		bson.M{
+			"$push": bson.M{"instants": bson.M{"insID": instantOID, "attitude": 0}},
+		},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func UpdateInstant(instant model.Instant) (*mongo.UpdateResult, error) {

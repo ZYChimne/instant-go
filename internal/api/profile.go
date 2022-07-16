@@ -18,7 +18,7 @@ func GetUserInfo(c *gin.Context) {
 		targetID = userID.(string)
 	}
 	errMsg := "Get userinfo error"
-	key := strings.Join([]string{"profile",targetID}, ":")
+	key := strings.Join([]string{"profile", targetID}, ":")
 	var user model.User
 	if info, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
 		log.Println(errMsg, " ", err.Error())
