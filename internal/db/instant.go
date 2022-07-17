@@ -249,7 +249,7 @@ func LikeInstant(like model.Like) error {
 			ctx,
 			bson.M{"insID": instantOID},
 			bson.M{
-				"$set":         bson.M{"useID": userOID, "attitude": like.Attitude},
+				"$set":         bson.M{"userID": userOID, "attitude": like.Attitude},
 				"$currentDate": bson.M{"lastModified": true},
 			},
 			options.Update().SetUpsert(true),
@@ -299,5 +299,50 @@ func ShareInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
 			"content":     instant.Content,
 			"refOriginID": instantOID,
 		},
+	)
+}
+
+func GetLikesUsername(instantID string, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(instantID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Likes.Aggregate(
+		ctx,
+		mongo.Pipeline{
+			bson.D{
+				{Key: "$match", Value: bson.M{"insID": oID}},
+			},
+			bson.D{{Key: "$sort", Value: bson.M{"_id": -1}}},
+			bson.D{{Key: "$limit", Value: pageSize}},
+			bson.D{{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "users",
+					"localField":   "userID",
+					"foreignField": "_id",
+					"as":           "users",
+				},
+			}},
+			bson.D{
+				{
+					Key: "$replaceRoot",
+					Value: bson.M{
+						"newRoot": bson.M{
+							"$first": "$users",
+						},
+					},
+				},
+			},
+			bson.D{
+				{
+					Key: "$project",
+					Value: bson.M{
+						"_id":      0,
+						"username": 1,
+					},
+				},
+			}},
+		options.Aggregate().SetMaxTime(time.Second*2),
 	)
 }

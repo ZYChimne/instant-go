@@ -31,6 +31,7 @@ func Create() {
 	instantRouterGroup.POST("like", api.LikeInstant)
 	instantRouterGroup.POST("share", api.ShareInstant)
 	instantRouterGroup.GET("instants", api.GetInstantsByUserID)
+	instantRouterGroup.GET("getLikesUsername", api.GetLikesUsername)
 	// Chat
 	chatRouterGroup := r.Group("chat")
 	chatRouterGroup.GET("echo", api.Echo)

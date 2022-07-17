@@ -13,7 +13,8 @@ import (
 func GetInstants(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	errMsg := "Get instants error"
-	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
+	indexStr := c.Query("index")
+	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
 		log.Println("Parse index error ", err.Error())
 		c.AbortWithStatusJSON(
@@ -22,7 +23,6 @@ func GetInstants(c *gin.Context) {
 		)
 		return
 	}
-	instants := []model.Instant{}
 	rows, err := database.GetInstants(userID.(string), index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
@@ -33,6 +33,7 @@ func GetInstants(c *gin.Context) {
 		return
 	}
 	defer rows.Close(ctx)
+	instants := []model.Instant{}
 	for rows.Next(ctx) {
 		var instant model.Instant
 		err := rows.Decode(&instant)
@@ -59,8 +60,9 @@ func GetInstants(c *gin.Context) {
 
 func GetInstantsByUserID(c *gin.Context) {
 	userID := c.Query("userID")
+	indexStr := c.Query("index")
 	errMsg := "Get instants error"
-	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
+	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
 		log.Println("Parse index error ", err.Error())
 		c.AbortWithStatusJSON(
@@ -69,7 +71,6 @@ func GetInstantsByUserID(c *gin.Context) {
 		)
 		return
 	}
-	instants := []model.Instant{}
 	rows, err := database.GetInstantsByUserID(userID, index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
@@ -80,6 +81,7 @@ func GetInstantsByUserID(c *gin.Context) {
 		return
 	}
 	defer rows.Close(ctx)
+	instants := []model.Instant{}
 	for rows.Next(ctx) {
 		var instant model.Instant
 		err := rows.Decode(&instant)
@@ -181,7 +183,12 @@ func LikeInstant(c *gin.Context) {
 	like.UserID = userID.(string)
 	err := database.LikeInstant(like)
 	if err != nil {
-		log.Panic("Database Error ", err.Error())
+		log.Println("Database Error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
 		"code": http.StatusCreated,
@@ -212,5 +219,37 @@ func ShareInstant(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
+	})
+}
+
+func GetLikesUsername(c *gin.Context) {
+	_ = c.MustGet("UserID")
+	errMsg := "Get like description error"
+	insID := c.Query("insID")
+	rows, err := database.GetLikesUsername(insID, pageSize)
+	if err != nil {
+		log.Println("Database Error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	defer rows.Close(ctx)
+	likes := []string{}
+	for rows.Next(ctx) {
+		likes = append(likes, rows.Current.Lookup("username").StringValue())
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"data": likes,
 	})
 }
