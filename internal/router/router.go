@@ -31,7 +31,7 @@ func Create() {
 	instantRouterGroup.POST("like", api.LikeInstant)
 	instantRouterGroup.POST("share", api.ShareInstant)
 	instantRouterGroup.GET("instants", api.GetInstantsByUserID)
-	instantRouterGroup.GET("getLikesUsername", api.GetLikesUsername)
+	instantRouterGroup.GET("getLikesUserInfo", api.GetLikesUserInfo)
 	// Chat
 	chatRouterGroup := r.Group("chat")
 	chatRouterGroup.GET("echo", api.Echo)
@@ -46,12 +46,15 @@ func Create() {
 	relationRouterGroup.GET("followings", api.GetFollowings)
 	relationRouterGroup.GET("followers", api.GetFollowings)
 	relationRouterGroup.GET("potential", api.GetPotentialFollowings)
+	relationRouterGroup.GET("friends", api.GetFriends)
+	relationRouterGroup.GET("recent", api.GetRecentContacts)
 	relationRouterGroup.GET("all", api.GetAllUsers)
 	relationRouterGroup.POST("", api.AddFollowing)
 	relationRouterGroup.DELETE("", api.RemoveFollowing)
 	// Profile
 	profileRouterGroup := r.Group("profile").Use(auth())
-	profileRouterGroup.GET("", api.GetUserInfo)
+	profileRouterGroup.GET("", api.GetUserProfile)
+	profileRouterGroup.GET("detail", api.GetUserProfileDetail)
 	r.Run(":8081")
 }
 

@@ -191,3 +191,61 @@ func RemoveFollowing(following model.Following) error {
 	_, err = session.WithTransaction(ctx, callback)
 	return err
 }
+
+func GetFriends(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Followings.Aggregate(
+		ctx,
+		mongo.Pipeline{
+			bson.D{
+				{Key: "$match", Value: bson.M{"followingID": oID, "userID": oID}},
+			},
+			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+			bson.D{{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "users",
+					"localField":   "userID",
+					"foreignField": "_id",
+					"as":           "user",
+				},
+			}},
+			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
+		},
+		options.Aggregate().SetMaxTime(2*time.Second),
+	)
+}
+
+func GetRecentContacts(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+	oID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mongoDB.Followings.Aggregate(
+		ctx,
+		mongo.Pipeline{
+			bson.D{
+				{Key: "$match", Value: bson.M{"followingID": oID, "userID": oID}},
+			},
+			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+			bson.D{{
+				Key: "$lookup",
+				Value: bson.M{
+					"from":         "users",
+					"localField":   "userID",
+					"foreignField": "_id",
+					"as":           "user",
+				},
+			}},
+			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
+		},
+		options.Aggregate().SetMaxTime(2*time.Second),
+	)
+}

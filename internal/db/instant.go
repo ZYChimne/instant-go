@@ -302,7 +302,7 @@ func ShareInstant(instant model.Instant) (*mongo.InsertOneResult, error) {
 	)
 }
 
-func GetLikesUsername(instantID string, pageSize int64) (*mongo.Cursor, error) {
+func GetLikesUserInfo(instantID string, index int64, pageSize int64) (*mongo.Cursor, error) {
 	oID, err := primitive.ObjectIDFromHex(instantID)
 	if err != nil {
 		return nil, err
@@ -314,6 +314,7 @@ func GetLikesUsername(instantID string, pageSize int64) (*mongo.Cursor, error) {
 				{Key: "$match", Value: bson.M{"insID": oID}},
 			},
 			bson.D{{Key: "$sort", Value: bson.M{"_id": -1}}},
+			bson.D{{Key: "$skip", Value: index}},
 			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
 				Key: "$lookup",
@@ -338,7 +339,6 @@ func GetLikesUsername(instantID string, pageSize int64) (*mongo.Cursor, error) {
 				{
 					Key: "$project",
 					Value: bson.M{
-						"_id":      0,
 						"username": 1,
 					},
 				},

@@ -26,3 +26,9 @@ type User struct {
 	Followings   int       `json:"followings"`
 	Followers    int       `json:"followers"`
 }
+
+type SimpleUser struct {
+	UserID   string `json:"userID"   bson:"_id"`
+	Username string `json:"username"`
+	Avatar   int    `json:"avatar"`
+}
