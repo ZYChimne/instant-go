@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"log"
 	"strings"
 	"time"
 	"zychimne/instant/pkg/model"
@@ -160,11 +159,11 @@ func fanOutOnWrite(instantOID primitive.ObjectID, userOID primitive.ObjectID) er
 		bson.D{
 			{Key: "$match", Value: bson.M{"userID": userOID}},
 		},
-		bson.D{{Key: "$limit", Value: 1}},
 		bson.D{
 			{
 				Key: "$project",
 				Value: bson.M{
+					"_id": 0,
 					"size": bson.M{
 						"$cond": bson.M{
 							"if":   bson.M{"$isArray": "$instants"},
@@ -182,7 +181,6 @@ func fanOutOnWrite(instantOID primitive.ObjectID, userOID primitive.ObjectID) er
 	defer rows.Close(ctx)
 	for rows.Next(ctx) {
 		size := rows.Current.Lookup("size").Int32()
-		log.Println(size)
 		if size >= maxFeedSize {
 			_, err := mongoDB.Feeds.UpdateOne(
 				ctx,

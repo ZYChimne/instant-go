@@ -47,21 +47,43 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 		ctx,
 		mongo.Pipeline{
 			bson.D{
-				{Key: "$match", Value: bson.M{"followingID": oID, "userID": bson.M{"$ne": oID}}},
+				{
+					Key: "$facet",
+					Value: bson.M{
+						"query1": mongo.Pipeline{
+							bson.D{{Key: "$match", Value: bson.M{"userID": oID}}},
+							bson.D{{Key: "$project", Value: bson.M{"followingID": 1, "_id": 0}}},
+						},
+						"query2": mongo.Pipeline{
+							bson.D{{Key: "$match", Value: bson.M{"followingID": oID}}},
+							bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+						},
+					},
+				},
 			},
-			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+			bson.D{
+				{
+					Key: "$project",
+					Value: bson.M{
+						"difference": bson.M{
+							"$setDifference": []string{"$query2.userID", "$query1.followingID"},
+						},
+					},
+				},
+			},
+			bson.D{{Key: "$unwind", Value: "$difference"}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
 				Key: "$lookup",
 				Value: bson.M{
 					"from":         "users",
-					"localField":   "userID",
+					"localField":   "difference",
 					"foreignField": "_id",
 					"as":           "user",
 				},
 			}},
 			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
-			bson.D{{Key: "$skip", Value: index}},
-			bson.D{{Key: "$limit", Value: pageSize}},
 		},
 		options.Aggregate().SetMaxTime(2*time.Second),
 	)
@@ -91,9 +113,15 @@ func AddFollowing(following model.Following) error {
 		if err != nil {
 			return nil, err
 		}
+		now := time.Now()
 		res1, err := mongoDB.Followings.InsertOne(
 			ctx,
-			bson.M{"userID": userOID, "followingID": followingOID, "lastModified": time.Now()},
+			bson.M{
+				"userID":       userOID,
+				"followingID":  followingOID,
+				"created":      now,
+				"lastModified": now,
+			},
 		)
 		if err != nil {
 			return res1, err
@@ -201,50 +229,43 @@ func GetFriends(userID string, index int64, pageSize int64) (*mongo.Cursor, erro
 		ctx,
 		mongo.Pipeline{
 			bson.D{
-				{Key: "$match", Value: bson.M{"followingID": oID, "userID": oID}},
-			},
-			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
-			bson.D{{
-				Key: "$lookup",
-				Value: bson.M{
-					"from":         "users",
-					"localField":   "userID",
-					"foreignField": "_id",
-					"as":           "user",
+				{
+					Key: "$facet",
+					Value: bson.M{
+						"query1": mongo.Pipeline{
+							bson.D{{Key: "$match", Value: bson.M{"userID": oID}}},
+							bson.D{{Key: "$project", Value: bson.M{"followingID": 1, "_id": 0}}},
+						},
+						"query2": mongo.Pipeline{
+							bson.D{{Key: "$match", Value: bson.M{"followingID": oID}}},
+							bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+						},
+					},
 				},
-			}},
-			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
-			bson.D{{Key: "$skip", Value: index}},
-			bson.D{{Key: "$limit", Value: pageSize}},
-		},
-		options.Aggregate().SetMaxTime(2*time.Second),
-	)
-}
-
-func GetRecentContacts(userID string, index int64, pageSize int64) (*mongo.Cursor, error) {
-	oID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		return nil, err
-	}
-	return mongoDB.Followings.Aggregate(
-		ctx,
-		mongo.Pipeline{
+			},
 			bson.D{
-				{Key: "$match", Value: bson.M{"followingID": oID, "userID": oID}},
+				{
+					Key: "$project",
+					Value: bson.M{
+						"intersection": bson.M{
+							"$setIntersection": []string{"$query1.followingID", "$query2.userID"},
+						},
+					},
+				},
 			},
-			bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
+			bson.D{{Key: "$unwind", Value: "$intersection"}},
+			bson.D{{Key: "$skip", Value: index}},
+			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
 				Key: "$lookup",
 				Value: bson.M{
 					"from":         "users",
-					"localField":   "userID",
+					"localField":   "intersection",
 					"foreignField": "_id",
 					"as":           "user",
 				},
 			}},
 			bson.D{{Key: "$replaceRoot", Value: bson.M{"newRoot": bson.M{"$first": "$user"}}}},
-			bson.D{{Key: "$skip", Value: index}},
-			bson.D{{Key: "$limit", Value: pageSize}},
 		},
 		options.Aggregate().SetMaxTime(2*time.Second),
 	)
