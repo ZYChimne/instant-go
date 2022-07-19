@@ -46,32 +46,8 @@ func GetPotentialFollowings(userID string, index int64, pageSize int64) (*mongo.
 	return mongoDB.Followings.Aggregate(
 		ctx,
 		mongo.Pipeline{
-			bson.D{
-				{
-					Key: "$facet",
-					Value: bson.M{
-						"query1": mongo.Pipeline{
-							bson.D{{Key: "$match", Value: bson.M{"userID": oID}}},
-							bson.D{{Key: "$project", Value: bson.M{"followingID": 1, "_id": 0}}},
-						},
-						"query2": mongo.Pipeline{
-							bson.D{{Key: "$match", Value: bson.M{"followingID": oID}}},
-							bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
-						},
-					},
-				},
-			},
-			bson.D{
-				{
-					Key: "$project",
-					Value: bson.M{
-						"difference": bson.M{
-							"$setDifference": []string{"$query2.userID", "$query1.followingID"},
-						},
-					},
-				},
-			},
-			bson.D{{Key: "$unwind", Value: "$difference"}},
+			bson.D{{Key: "$match", Value: bson.M{"followingID": oID, "isFriend": false}}},
+			bson.D{{Key: "$sort", Value: bson.M{"lastModified": -1}}},
 			bson.D{{Key: "$skip", Value: index}},
 			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
@@ -99,6 +75,9 @@ func GetAllUsers(index int64, pageSize int64) (*mongo.Cursor, error) {
 }
 
 func AddFollowing(following model.Following) error {
+	if following.UserID == following.FollowingID {
+		return errors.New("userID and followingID must not be the same")
+	}
 	session, err := mongoDB.Client.StartSession()
 	if err != nil {
 		return err
@@ -114,42 +93,51 @@ func AddFollowing(following model.Following) error {
 			return nil, err
 		}
 		now := time.Now()
-		res1, err := mongoDB.Followings.InsertOne(
+		res1, err := mongoDB.Followings.UpdateOne(
 			ctx,
-			bson.M{
-				"userID":       userOID,
-				"followingID":  followingOID,
-				"created":      now,
-				"lastModified": now,
-			},
+			bson.M{"followingID": userOID, "userID": followingOID},
+			bson.M{"$set": bson.M{"lastModified": now, "isFriend": true}},
 		)
 		if err != nil {
 			return res1, err
 		}
-		res2, err := mongoDB.Users.UpdateOne(
+		res2, err := mongoDB.Followings.InsertOne(
 			ctx,
-			bson.M{"_id": userOID},
-			bson.M{"$inc": bson.M{"followings": 1}},
+			bson.M{
+				"userID":       userOID,
+				"followingID":  followingOID,
+				"isFriend":     res1.ModifiedCount==1,
+				"created":      now,
+				"lastModified": now,
+			},
 		)
 		if err != nil {
 			return res2, err
 		}
 		res3, err := mongoDB.Users.UpdateOne(
 			ctx,
-			bson.M{"_id": followingOID},
-			bson.M{"$inc": bson.M{"followers": 1}},
+			bson.M{"_id": userOID},
+			bson.M{"$inc": bson.M{"followings": 1}},
 		)
 		if err != nil {
 			return res3, err
 		}
-		if res2.ModifiedCount != 1 || res3.ModifiedCount != 1 {
+		res4, err := mongoDB.Users.UpdateOne(
+			ctx,
+			bson.M{"_id": followingOID},
+			bson.M{"$inc": bson.M{"followers": 1}},
+		)
+		if err != nil {
+			return res4, err
+		}
+		if res3.ModifiedCount != 1 || res4.ModifiedCount != 1 {
 			return nil, errors.New(
 				strings.Join(
 					[]string{
 						"inc followings:",
-						strconv.FormatInt(res2.ModifiedCount, 10),
-						"inc followers:",
 						strconv.FormatInt(res3.ModifiedCount, 10),
+						"inc followers:",
+						strconv.FormatInt(res4.ModifiedCount, 10),
 					},
 					" ",
 				),
@@ -162,6 +150,9 @@ func AddFollowing(following model.Following) error {
 }
 
 func RemoveFollowing(following model.Following) error {
+	if following.UserID == following.FollowingID {
+		return errors.New("userID and followingID must not be the same")
+	}
 	session, err := mongoDB.Client.StartSession()
 	if err != nil {
 		return err
@@ -176,39 +167,47 @@ func RemoveFollowing(following model.Following) error {
 		if err != nil {
 			return nil, err
 		}
-		res1, err := mongoDB.Followings.DeleteOne(
+		res1, err := mongoDB.Followings.UpdateOne(
 			ctx,
-			bson.M{"userID": userOID, "followingID": followingOID},
+			bson.M{"followingID": userOID, "userID": followingOID},
+			bson.M{"$set": bson.M{"lastModified": time.Now(), "isFriend": false}},
 		)
 		if err != nil {
 			return res1, err
 		}
-		res2, err := mongoDB.Users.UpdateOne(
+		res2, err := mongoDB.Followings.DeleteOne(
 			ctx,
-			bson.M{"_id": userOID},
-			bson.M{"$inc": bson.M{"followings": -1}},
+			bson.M{"userID": userOID, "followingID": followingOID},
 		)
 		if err != nil {
 			return res2, err
 		}
 		res3, err := mongoDB.Users.UpdateOne(
 			ctx,
-			bson.M{"_id": followingOID},
-			bson.M{"$inc": bson.M{"followers": -1}},
+			bson.M{"_id": userOID},
+			bson.M{"$inc": bson.M{"followings": -1}},
 		)
 		if err != nil {
 			return res3, err
 		}
-		if res1.DeletedCount != 1 || res2.ModifiedCount == 1 || res3.ModifiedCount != 1 {
+		res4, err := mongoDB.Users.UpdateOne(
+			ctx,
+			bson.M{"_id": followingOID},
+			bson.M{"$inc": bson.M{"followers": -1}},
+		)
+		if err != nil {
+			return res4, err
+		}
+		if res2.DeletedCount != 1 || res3.ModifiedCount == 1 || res4.ModifiedCount != 1 {
 			return nil, errors.New(
 				strings.Join(
 					[]string{
 						"delete:",
-						strconv.FormatInt(res1.DeletedCount, 10),
+						strconv.FormatInt(res2.DeletedCount, 10),
 						"inc followings:",
-						strconv.FormatInt(res2.ModifiedCount, 10),
-						"inc followers:",
 						strconv.FormatInt(res3.ModifiedCount, 10),
+						"inc followers:",
+						strconv.FormatInt(res4.ModifiedCount, 10),
 					},
 					" ",
 				),
@@ -228,39 +227,15 @@ func GetFriends(userID string, index int64, pageSize int64) (*mongo.Cursor, erro
 	return mongoDB.Followings.Aggregate(
 		ctx,
 		mongo.Pipeline{
-			bson.D{
-				{
-					Key: "$facet",
-					Value: bson.M{
-						"query1": mongo.Pipeline{
-							bson.D{{Key: "$match", Value: bson.M{"userID": oID}}},
-							bson.D{{Key: "$project", Value: bson.M{"followingID": 1, "_id": 0}}},
-						},
-						"query2": mongo.Pipeline{
-							bson.D{{Key: "$match", Value: bson.M{"followingID": oID}}},
-							bson.D{{Key: "$project", Value: bson.M{"userID": 1, "_id": 0}}},
-						},
-					},
-				},
-			},
-			bson.D{
-				{
-					Key: "$project",
-					Value: bson.M{
-						"intersection": bson.M{
-							"$setIntersection": []string{"$query1.followingID", "$query2.userID"},
-						},
-					},
-				},
-			},
-			bson.D{{Key: "$unwind", Value: "$intersection"}},
+			bson.D{{Key: "$match", Value: bson.M{"userID": oID, "isFriend": true}}},
+			bson.D{{Key: "$sort", Value: bson.M{"lastModified": -1}}},
 			bson.D{{Key: "$skip", Value: index}},
 			bson.D{{Key: "$limit", Value: pageSize}},
 			bson.D{{
 				Key: "$lookup",
 				Value: bson.M{
 					"from":         "users",
-					"localField":   "intersection",
+					"localField":   "followingID",
 					"foreignField": "_id",
 					"as":           "user",
 				},
