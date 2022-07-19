@@ -106,7 +106,7 @@ func AddFollowing(following model.Following) error {
 			bson.M{
 				"userID":       userOID,
 				"followingID":  followingOID,
-				"isFriend":     res1.ModifiedCount==1,
+				"isFriend":     res1.ModifiedCount == 1,
 				"created":      now,
 				"lastModified": now,
 			},
