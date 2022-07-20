@@ -1,9 +1,11 @@
 package api
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
@@ -219,6 +221,12 @@ func AddFollowing(c *gin.Context) {
 		)
 		return
 	}
+	err = database.RedisClient.Del(ctx, strings.Join([]string{"recent", userID.(string)}, ":"), strings.Join([]string{"recent", following.FollowingID}, ":")).
+		Err()
+	if err != nil {
+		log.Println("Redis error ", err.Error())
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusAccepted, "message": "accepted",
 	})
@@ -246,6 +254,12 @@ func RemoveFollowing(c *gin.Context) {
 		)
 		return
 	}
+	err = database.RedisClient.Del(ctx, strings.Join([]string{"recent", userID.(string)}, ":"), strings.Join([]string{"recent", following.FollowingID}, ":")).
+		Err()
+	if err != nil {
+		log.Println("Redis error ", err.Error())
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusAccepted, "message": "accepted",
 	})
@@ -263,7 +277,21 @@ func GetFriends(c *gin.Context) {
 		)
 		return
 	}
+	key := strings.Join([]string{"recent", userID.(string)}, ":")
 	users := []model.SimpleUser{}
+	if index == 0 {
+		if cache, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
+			log.Println(errMsg, " ", err.Error())
+		} else {
+			err := json.Unmarshal([]byte(cache), &users)
+			if err != nil {
+				log.Println("Unmarshal error ", err.Error())
+			} else {
+				c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
+				return
+			}
+		}
+	}
 	rows, err := database.GetFriends(userID.(string), index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
@@ -294,6 +322,19 @@ func GetFriends(c *gin.Context) {
 			gin.H{"code": http.StatusBadRequest, "message": errMsg},
 		)
 		return
+	}
+	if index == 0 {
+		cache, err := json.Marshal(users)
+		if err != nil {
+			log.Println("Marshal error ", err.Error())
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
+		}
+		if err := database.RedisClient.Set(ctx, key, cache, redisExpireTime).Err(); err != nil {
+			log.Println("Redis error ", err.Error())
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 }
