@@ -54,6 +54,7 @@ func Create() {
 	profileRouterGroup := r.Group("profile").Use(auth())
 	profileRouterGroup.GET("", api.GetUserProfile)
 	profileRouterGroup.GET("detail", api.GetUserProfileDetail)
+	profileRouterGroup.GET("query", api.QueryUsers)
 	r.Run(":8081")
 }
 

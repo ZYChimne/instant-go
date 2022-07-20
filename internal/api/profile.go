@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
@@ -31,7 +32,7 @@ func GetUserProfileDetail(c *gin.Context) {
 			return
 		}
 	}
-	err := database.GetUserProfile(targetID).Decode(&user)
+	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(
@@ -74,7 +75,7 @@ func GetUserProfile(c *gin.Context) {
 			return
 		}
 	}
-	err := database.GetUserProfile(targetID).Decode(&user)
+	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(
@@ -95,4 +96,60 @@ func GetUserProfile(c *gin.Context) {
 		log.Println("Redis error ", err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
+}
+
+func QueryUsers(c *gin.Context) {
+	_ = c.MustGet("UserID")
+	keyword := c.Query("keyword")
+	errMsg := "Query users error"
+	if keyword == "" {
+		log.Println(errMsg, " Keyword is empty")
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": "Keyword is empty"},
+		)
+		return
+	}
+	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
+	if err != nil {
+		log.Println("Parse index error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	rows, err := database.QueryUsers(keyword, index, pageSize)
+	if err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	defer rows.Close(ctx)
+	users := []model.SimpleUser{}
+	for rows.Next(ctx) {
+		var user model.SimpleUser
+		err := rows.Decode(&user)
+		if err != nil {
+			log.Println("Database Decode error ", err.Error())
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": http.StatusBadRequest, "message": errMsg},
+			)
+			return
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Database error ", err.Error())
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{"code": http.StatusBadRequest, "message": errMsg},
+		)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 }
