@@ -99,7 +99,7 @@ func GetUserProfile(c *gin.Context) {
 }
 
 func QueryUsers(c *gin.Context) {
-	_ = c.MustGet("UserID")
+	userID := c.MustGet("UserID")
 	keyword := c.Query("keyword")
 	errMsg := "Query users error"
 	if keyword == "" {
@@ -119,7 +119,7 @@ func QueryUsers(c *gin.Context) {
 		)
 		return
 	}
-	rows, err := database.QueryUsers(keyword, index, pageSize)
+	rows, err := database.QueryUsers(userID.(string), keyword, index, pageSize)
 	if err != nil {
 		log.Println("Database error ", err.Error())
 		c.AbortWithStatusJSON(
@@ -129,9 +129,9 @@ func QueryUsers(c *gin.Context) {
 		return
 	}
 	defer rows.Close(ctx)
-	users := []model.SimpleUser{}
+	users := []model.QueryUser{}
 	for rows.Next(ctx) {
-		var user model.SimpleUser
+		var user model.QueryUser
 		err := rows.Decode(&user)
 		if err != nil {
 			log.Println("Database Decode error ", err.Error())

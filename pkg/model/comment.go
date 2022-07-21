@@ -9,6 +9,8 @@ type Comment struct {
 	InsID        string    `json:"insID"`
 	ReplyToID    string    `json:"replyToID"`
 	UserID       string    `json:"userID"`
+	Username     string    `json:"username"`
+	Avatar       int       `json:"avatar"`
 	Content      string    `json:"content"`
 	Direct       bool      `json:"direct"`
 }

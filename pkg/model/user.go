@@ -32,3 +32,11 @@ type SimpleUser struct {
 	Username string `json:"username"`
 	Avatar   int    `json:"avatar"`
 }
+
+type QueryUser struct {
+	UserID      string `json:"userID"      bson:"_id"`
+	Username    string `json:"username"`
+	Avatar      int    `json:"avatar"`
+	IsFollowing bool   `json:"isFollowing"`
+	IsFriend    bool   `json:"isFriend"`
+}

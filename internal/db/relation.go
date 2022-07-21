@@ -198,7 +198,7 @@ func RemoveFollowing(following model.Following) error {
 		if err != nil {
 			return res4, err
 		}
-		if res2.DeletedCount != 1 || res3.ModifiedCount == 1 || res4.ModifiedCount != 1 {
+		if res2.DeletedCount != 1 || res3.ModifiedCount != 1 || res4.ModifiedCount != 1 {
 			return nil, errors.New(
 				strings.Join(
 					[]string{
