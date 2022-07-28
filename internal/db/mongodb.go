@@ -26,6 +26,7 @@ func ConnectMongoDB() {
 		Users:      database.Collection("users"),
 		Instants:   database.Collection("instants"),
 		Feeds:      database.Collection("feeds"),
+		Sharings:   database.Collection("sharings"),
 		Comments:   database.Collection("comments"),
 		Followings: database.Collection("followings"),
 		Likes:      database.Collection("likes"),
