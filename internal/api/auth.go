@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func Ping(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "pong"})
+}
+
 func Register(c *gin.Context) {
 	var user model.User
 	errMsg := "Register error"

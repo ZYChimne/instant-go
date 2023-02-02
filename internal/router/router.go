@@ -21,6 +21,7 @@ func Create() {
 	}))
 	// Auth
 	authRouterGroup := r.Group("auth")
+	authRouterGroup.GET("ping", api.Ping)
 	authRouterGroup.POST("register", api.Register)
 	authRouterGroup.POST("getToken", api.GetToken)
 	// Instant
