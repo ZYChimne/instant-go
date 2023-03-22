@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	database "zychimne/instant/internal/db"
@@ -10,74 +9,50 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetSharings(c *gin.Context) {
+func GetShares(c *gin.Context) {
 	_ = c.MustGet("UserID")
-	errMsg := "Get sharings error"
+	errMsg := "Get shares error"
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		log.Println("Parse index error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
-	rows, err := database.GetSharings(insID, index, pageSize)
+	rows, err := database.GetShares(insID, index, pageSize)
 	if err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	defer rows.Close(ctx)
-	sharings := []model.Sharing{}
+	shares := []model.Share{}
 	for rows.Next(ctx) {
-		var sharing model.Sharing
+		var sharing model.Share
 		err := rows.Decode(&sharing)
 		if err != nil {
-			log.Println("Database Decode error ", err.Error())
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				gin.H{"code": http.StatusBadRequest, "message": errMsg},
-			)
+			Abort(c, err, http.StatusBadRequest, errMsg)
 			return
 		}
-		sharings = append(sharings, sharing)
+		shares = append(shares, sharing)
 	}
 	if err := rows.Err(); err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": sharings})
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": shares})
 }
 
 func PostSharingInstants(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	errMsg := "Post sharing instants error"
-	var share_sentence model.Sharing
+	var share_sentence model.Share
 	if err := c.Bind(&share_sentence); err != nil {
-		log.Println("Bind json error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	share_sentence.UserID = userID.(string)
-	result, err := database.PostSharing(share_sentence)
+	result, err := database.PostShare(share_sentence)
 	if err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

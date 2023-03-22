@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetSharings(insID string, index int64, pageSize int64) (*mongo.Cursor, error) {
+func GetShares(insID string, index int64, pageSize int64) (*mongo.Cursor, error) {
 	oID, err := primitive.ObjectIDFromHex(insID)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func GetSharings(insID string, index int64, pageSize int64) (*mongo.Cursor, erro
 	)
 }
 
-func PostSharing(sharing model.Sharing) (*mongo.InsertOneResult, error) {
+func PostShare(sharing model.Share) (*mongo.InsertOneResult, error) {
 	instantOID, err := primitive.ObjectIDFromHex(sharing.InsID)
 	if err != nil {
 		return nil, err

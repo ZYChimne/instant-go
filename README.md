@@ -25,6 +25,9 @@ set https_proxy=%http_proxy%
 ## TODO
   
 * Read Escape Analysis
+* [Some High Availability Improvement](https://mp.weixin.qq.com/s/4T_S7nR8-HXJ59IbK4FBWQ)
+* AVIF Support
+* [Logging System](https://mp.weixin.qq.com/s/dUs7WUKUDOf9lLG6tzdk0g)
 
 ## MongoDB 
 

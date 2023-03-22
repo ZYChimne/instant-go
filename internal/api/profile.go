@@ -34,20 +34,12 @@ func GetUserProfileDetail(c *gin.Context) {
 	}
 	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	cache, err := json.Marshal(user)
 	if err != nil {
-		log.Println("Marshal error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 	}
 	if err := database.RedisClient.Set(ctx, key, cache, redisExpireTime).Err(); err != nil {
 		log.Println("Redis error ", err.Error())
@@ -77,20 +69,12 @@ func GetUserProfile(c *gin.Context) {
 	}
 	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	cache, err := json.Marshal(user)
 	if err != nil {
-		log.Println("Marshal error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 	}
 	if err := database.RedisClient.Set(ctx, key, cache, redisExpireTime).Err(); err != nil {
 		log.Println("Redis error ", err.Error())
@@ -103,29 +87,17 @@ func QueryUsers(c *gin.Context) {
 	keyword := c.Query("keyword")
 	errMsg := "Query users error"
 	if keyword == "" {
-		log.Println(errMsg, " Keyword is empty")
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": "Keyword is empty"},
-		)
+		Abort(c, nil, http.StatusBadRequest, errMsg)
 		return
 	}
 	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
 	if err != nil {
-		log.Println("Parse index error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	rows, err := database.QueryUsers(userID.(string), keyword, index, pageSize)
 	if err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	defer rows.Close(ctx)
@@ -134,21 +106,13 @@ func QueryUsers(c *gin.Context) {
 		var user model.QueryUser
 		err := rows.Decode(&user)
 		if err != nil {
-			log.Println("Database Decode error ", err.Error())
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				gin.H{"code": http.StatusBadRequest, "message": errMsg},
-			)
+			Abort(c, err, http.StatusBadRequest, errMsg)
 			return
 		}
 		users = append(users, user)
 	}
 	if err := rows.Err(); err != nil {
-		log.Println("Database error ", err.Error())
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": http.StatusBadRequest, "message": errMsg},
-		)
+		Abort(c, err, http.StatusBadRequest, errMsg)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
