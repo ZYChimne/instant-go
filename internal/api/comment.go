@@ -50,7 +50,7 @@ func PostComment(c *gin.Context) {
 		return
 	}
 	comment.UserID = userID.(string)
-	result, err := database.PostComment(comment)
+	result, err := database.PostComment(comment) // TODO: use Redis
 	if err != nil {
 		Abort(c, err, http.StatusBadRequest, errMsg)
 		return

@@ -12,7 +12,7 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 ## Project setup
 
 ```bash
-sudo service redis-server start #   wsl
+sudo service redis-server start # wsl
 gofmt ./ -w
 golines ./ -w
 ```
