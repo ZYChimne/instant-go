@@ -15,12 +15,12 @@ func GetComments(c *gin.Context) {
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.GetComments(insID, index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -29,13 +29,13 @@ func GetComments(c *gin.Context) {
 		var comment model.Comment
 		err := rows.Decode(&comment)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		comments = append(comments, comment)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": comments})
@@ -46,13 +46,13 @@ func PostComment(c *gin.Context) {
 	errMsg := "Post comment error"
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	comment.UserID = userID.(string)
 	result, err := database.PostComment(comment) // TODO: use Redis
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

@@ -6,11 +6,17 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"zychimne/instant/internal/db"
+	"time"
+	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
 	"github.com/gin-gonic/gin"
 )
+
+type cachedUser struct {
+	user      model.User
+	timestamp int64
+}
 
 func GetUserProfileDetail(c *gin.Context) {
 	userID := c.MustGet("UserID")
@@ -20,11 +26,20 @@ func GetUserProfileDetail(c *gin.Context) {
 	}
 	errMsg := "Get userinfo error"
 	key := strings.Join([]string{"profileDetail", targetID}, ":")
+	if val, ok := database.UserCache.Get(key); ok {
+		cachedUser := val.(cachedUser)
+		if time.Now().Unix()-cachedUser.timestamp < 60 {
+			c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": cachedUser.user})
+			return
+		} else {
+			database.UserCache.Remove(key)
+		}
+	}
 	var user model.User
-	if cache, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
+	if userJson, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
 		log.Println(errMsg, " ", err.Error())
 	} else {
-		err := json.Unmarshal([]byte(cache), &user)
+		err := json.Unmarshal([]byte(userJson), &user)
 		if err != nil {
 			log.Println("Unmarshal error ", err.Error())
 		} else {
@@ -34,15 +49,17 @@ func GetUserProfileDetail(c *gin.Context) {
 	}
 	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
-	cache, err := json.Marshal(user)
+	userJson, err := json.Marshal(user)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 	}
-	if err := database.RedisClient.Set(ctx, key, cache, redisExpireTime).Err(); err != nil {
-		log.Println("Redis error ", err.Error())
+	if redisExpireTime >= 0 {
+		if err := database.RedisClient.Set(ctx, key, userJson, redisExpireTime).Err(); err != nil {
+			log.Println("Redis error ", err.Error())
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
 }
@@ -56,12 +73,12 @@ func GetUserProfile(c *gin.Context) {
 	errMsg := "Get userinfo error"
 	key := strings.Join([]string{"profile", targetID}, ":")
 	var user model.SimpleUser
-	if cache, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
-		log.Println(errMsg, " ", err.Error())
+	if userJson, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
+		handleError(c, err, 0, errMsg, Warning)
 	} else {
-		err := json.Unmarshal([]byte(cache), &user)
+		err := json.Unmarshal([]byte(userJson), &user)
 		if err != nil {
-			log.Println("Unmarshal error ", err.Error())
+			handleError(c, err, 0, "Unmarshal error", Warning)
 		} else {
 			c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
 			return
@@ -69,15 +86,17 @@ func GetUserProfile(c *gin.Context) {
 	}
 	err := database.GetUserProfileByID(targetID).Decode(&user)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
-	cache, err := json.Marshal(user)
+	userJson, err := json.Marshal(user)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 	}
-	if err := database.RedisClient.Set(ctx, key, cache, redisExpireTime).Err(); err != nil {
-		log.Println("Redis error ", err.Error())
+	if redisExpireTime >= 0 {
+		if err := database.RedisClient.Set(ctx, key, userJson, redisExpireTime).Err(); err != nil {
+			log.Println("Redis error ", err.Error())
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
 }
@@ -87,17 +106,17 @@ func QueryUsers(c *gin.Context) {
 	keyword := c.Query("keyword")
 	errMsg := "Query users error"
 	if keyword == "" {
-		Abort(c, nil, http.StatusBadRequest, errMsg)
+		handleError(c, nil, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.QueryUsers(userID.(string), keyword, index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -106,13 +125,13 @@ func QueryUsers(c *gin.Context) {
 		var user model.QueryUser
 		err := rows.Decode(&user)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		users = append(users, user)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})

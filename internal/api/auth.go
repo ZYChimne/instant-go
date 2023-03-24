@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"zychimne/instant/internal/db"
+	database "zychimne/instant/internal/db"
 	"zychimne/instant/internal/util"
 	"zychimne/instant/pkg/model"
 
@@ -19,12 +19,12 @@ func Register(c *gin.Context) {
 	var user model.User
 	errMsg := "Register error"
 	if err := c.Bind(&user); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	_, err := database.Register(user)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusCreated})
@@ -34,7 +34,7 @@ func GetToken(c *gin.Context) {
 	var user model.User
 	errMsg := "Please check if your account or password is correct"
 	if err := c.Bind(&user); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	key := strings.Join([]string{"token", user.MailBox, user.Password}, ":")
@@ -46,11 +46,11 @@ func GetToken(c *gin.Context) {
 	}
 	password := user.Password
 	if err := database.GetUser(user.MailBox, &user); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	if !util.CheckPasswordHash(password, user.Password) {
-		Abort(c, nil, http.StatusBadRequest, errMsg)
+		handleError(c, nil, http.StatusBadRequest, errMsg, PasswordError)
 		return
 	}
 	token := util.GenerateJwt(user.UserID)

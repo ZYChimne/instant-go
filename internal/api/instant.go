@@ -15,12 +15,12 @@ func GetInstants(c *gin.Context) {
 	indexStr := c.Query("index")
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.GetInstants(userID.(string), index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -29,13 +29,13 @@ func GetInstants(c *gin.Context) {
 		var instant model.Instant
 		err := rows.Decode(&instant)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		instants = append(instants, instant)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
@@ -47,12 +47,12 @@ func GetInstantsByUserID(c *gin.Context) {
 	errMsg := "Get instants error"
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.GetInstantsByUserID(userID, index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -61,13 +61,13 @@ func GetInstantsByUserID(c *gin.Context) {
 		var instant model.Instant
 		err := rows.Decode(&instant)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		instants = append(instants, instant)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
@@ -78,13 +78,13 @@ func PostInstant(c *gin.Context) {
 	errMsg := "Post instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	instant.UserID = userID.(string)
 	err := database.PostInstant(instant)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -97,17 +97,17 @@ func UpdateInstant(c *gin.Context) {
 	errMsg := "Update instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	instant.UserID = userID.(string)
 	result, err := database.UpdateInstant(instant)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	if result.ModifiedCount == 0 {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -120,13 +120,13 @@ func LikeInstant(c *gin.Context) {
 	errMsg := "Like instant error"
 	var like model.Like
 	if err := c.Bind(&like); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	like.UserID = userID.(string)
 	err := database.LikeInstant(like)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -139,13 +139,13 @@ func ShareInstant(c *gin.Context) {
 	errMsg := "Share instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	instant.UserID = userID.(string)
 	_, err := database.ShareInstant(instant)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -160,12 +160,12 @@ func GetLikesUserInfo(c *gin.Context) {
 	indexStr := c.Query("index")
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.GetLikesUserInfo(insID, index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -174,13 +174,13 @@ func GetLikesUserInfo(c *gin.Context) {
 		var userInfo model.SimpleUser
 		err := rows.Decode(&userInfo)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		userInfos = append(userInfos, userInfo)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

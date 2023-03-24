@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Share struct {
-	ShareID         string    `json:"commentID"    bson:"_id"`
+	ShareID         string    `json:"commentID"       bson:"_id"`
 	Created         time.Time `json:"created"`
 	LastModified    time.Time `json:"lastModified"`
 	InsID           string    `json:"insID"`

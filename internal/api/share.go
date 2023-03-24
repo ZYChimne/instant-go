@@ -15,12 +15,12 @@ func GetShares(c *gin.Context) {
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
 		return
 	}
 	rows, err := database.GetShares(insID, index, pageSize)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -29,13 +29,13 @@ func GetShares(c *gin.Context) {
 		var sharing model.Share
 		err := rows.Decode(&sharing)
 		if err != nil {
-			Abort(c, err, http.StatusBadRequest, errMsg)
+			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 			return
 		}
 		shares = append(shares, sharing)
 	}
 	if err := rows.Err(); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": shares})
@@ -46,13 +46,13 @@ func PostSharingInstants(c *gin.Context) {
 	errMsg := "Post sharing instants error"
 	var share_sentence model.Share
 	if err := c.Bind(&share_sentence); err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
 		return
 	}
 	share_sentence.UserID = userID.(string)
 	result, err := database.PostShare(share_sentence)
 	if err != nil {
-		Abort(c, err, http.StatusBadRequest, errMsg)
+		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

@@ -4,7 +4,7 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 
 ## Features
 
-* High Performance and Scalable
+* High Performance, High Availability and Scalable
 * Access: RESTful
 * Storage: Redis, Mongodb (https://www.mongodb.com/developer/products/mongodb/mongodb-schema-design-best-practices/)
 * Fan out on Write
