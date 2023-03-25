@@ -3,9 +3,13 @@ package api
 import (
 	"container/list"
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
+	"reflect"
 	"time"
+	database "zychimne/instant/internal/db"
+	"zychimne/instant/internal/util/hotkey"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +17,7 @@ import (
 var ctx = context.Background()
 
 const pageSize int64 = 10
+
 const errorListMaxSize int = 0x10000 // 2^17=65536
 
 var redisExpireTime time.Duration = 0 // 0 means no expire, ONLY FOR DEBUG
@@ -26,6 +31,7 @@ const (
 	DatabaseError  = 3
 	RedisError     = 4
 	PasswordError  = 5
+	BindError      = 6
 )
 
 var UndefinedErrorList *list.List = list.New()
@@ -33,6 +39,53 @@ var JsonErrorList *list.List = list.New()
 var DatabaseErrorList *list.List = list.New()
 var RedisErrorList *list.List = list.New()
 var PasswordErrorList *list.List = list.New()
+var BindErrorList *list.List = list.New()
+
+func getFromCache(c *gin.Context, key string, localCache *hotkey.HotKeyCache) bool {
+	item, ok := localCache.Get(key)
+	if ok {
+		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": item})
+		return true
+	} else if getFromRedis(c, key) {
+		return true
+	}
+	return false
+}
+
+func getFromRedis(c *gin.Context, key string) bool {
+	res, err := database.RedisClient.Get(ctx, key).Result()
+	if err != nil {
+		handleError(nil, err, 0, "Get from redis error", RedisError)
+		return false
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": res})
+	return true
+}
+
+func putInRedis(key string, item interface{}) {
+	var res string
+	if reflect.TypeOf(item).Kind() == reflect.String {
+		res = item.(string)
+	} else {
+		bytes, err := json.Marshal(item)
+		if err != nil {
+			handleError(nil, err, 0, "Marshal error", JsonError)
+		}
+		res = string(bytes)
+	}
+	if redisExpireTime >= 0 {
+		err := database.RedisClient.Set(ctx, key, res, redisExpireTime).Err()
+		if err != nil {
+			handleError(nil, err, 0, "Put in redis error", RedisError)
+		}
+	}
+}
+
+func putInCache(key string, item any, localCache *hotkey.HotKeyCache) {
+	if !localCache.Add(key, item) {
+		putInRedis(key, item)
+	}
+}
 
 func updateErrorList(cur int64, l *list.List) {
 	l.PushBack(cur)
@@ -76,10 +129,6 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 		{
 			updateErrorList(cur, JsonErrorList)
 		}
-		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": code, "message": message},
-		)
 	case DatabaseError:
 		{
 			updateErrorList(cur, DatabaseErrorList)
@@ -107,5 +156,13 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 			http.StatusBadRequest,
 			gin.H{"code": code, "message": message},
 		)
+	case BindError:
+		{
+			updateErrorList(cur, BindErrorList)
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"code": code, "message": message},
+			)
+		}
 	}
 }

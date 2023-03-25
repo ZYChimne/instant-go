@@ -15,7 +15,7 @@ func GetComments(c *gin.Context) {
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	rows, err := database.GetComments(insID, index, pageSize)
@@ -46,7 +46,7 @@ func PostComment(c *gin.Context) {
 	errMsg := "Post comment error"
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	comment.UserID = userID.(string)

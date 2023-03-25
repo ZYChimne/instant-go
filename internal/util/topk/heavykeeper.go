@@ -22,21 +22,24 @@ type KeeperNode struct {
 	fp   int
 }
 
-type HeavyKeeperHeap []HeapNode
+type HeavyKeeperHeap struct {
+	keeper  []HeapNode
+	heapMap map[string]int
+}
 
 var heapMap map[string]int
 
-func (hkh HeavyKeeperHeap) Len() int           { return len(hkh) }
-func (hkh HeavyKeeperHeap) Less(i, j int) bool { return hkh[i].freq < hkh[j].freq }
+func (hkh HeavyKeeperHeap) Len() int           { return len(hkh.keeper) }
+func (hkh HeavyKeeperHeap) Less(i, j int) bool { return hkh.keeper[i].freq < hkh.keeper[j].freq }
 
 func (hkh HeavyKeeperHeap) Swap(i, j int) {
-	heapMap[hkh[i].val] = j
-	heapMap[hkh[j].val] = i
-	hkh[i], hkh[j] = hkh[j], hkh[i]
+	heapMap[hkh.keeper[i].val] = j
+	heapMap[hkh.keeper[j].val] = i
+	hkh.keeper[i], hkh.keeper[j] = hkh.keeper[j], hkh.keeper[i]
 }
 
 func (hkh HeavyKeeperHeap) Top() HeapNode {
-	return hkh[0]
+	return hkh.keeper[0]
 }
 
 func (hkh HeavyKeeperHeap) Find(target string) int { // should be O1
@@ -49,30 +52,30 @@ func (hkh HeavyKeeperHeap) Find(target string) int { // should be O1
 func (hkh *HeavyKeeperHeap) Push(x any) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*hkh = append(*hkh, HeapNode{0, x.(string)})
-	heapMap[x.(string)] = len(*hkh) - 1
+	hkh.keeper = append(hkh.keeper, HeapNode{0, x.(string)})
+	heapMap[x.(string)] = len(hkh.keeper) - 1
 }
 
 func (hkh *HeavyKeeperHeap) Pop() any {
-	old := *hkh
+	old := hkh.keeper
 	n := len(old)
 	x := old[n-1]
-	*hkh = old[0 : n-1]
+	hkh.keeper = old[0 : n-1]
 	delete(heapMap, x.val)
 	return x
 }
 
 func (hkh HeavyKeeperHeap) Get(i int) HeapNode {
-	return hkh[i]
+	return hkh.keeper[i]
 }
 
 func (hkh *HeavyKeeperHeap) Set(i int, freq int) {
-	(*hkh)[i].freq = freq
+	hkh.keeper[i].freq = freq
 }
 
 func (hkh *HeavyKeeperHeap) Fade() {
-	for i := range *hkh {
-		(*hkh)[i].freq = (*hkh)[i].freq >> 1
+	for i := range hkh.keeper {
+		hkh.keeper[i].freq = hkh.keeper[i].freq >> 1
 	}
 }
 
@@ -89,7 +92,10 @@ type HeavyKeeper struct {
 }
 
 func NewHeavyKeeper(k int, rows uint64, cols uint64, decay float64, minFreq int) *HeavyKeeper {
-	heap.Init(&HeavyKeeperHeap{})
+	heap.Init(&HeavyKeeperHeap{
+		keeper:  []HeapNode{},
+		heapMap: map[string]int{},
+	})
 	keeper := make([][]KeeperNode, rows)
 	seeds := make([]maphash.Seed, rows)
 	for i := range keeper {
@@ -167,11 +173,11 @@ func (hk *HeavyKeeper) Add(s string) (string, bool) {
 		return "", true
 	}
 	heap.Push(hk.minHeap, HeapNode{maxFreq, s})
-	var emit string
+	var evict string
 	if hk.minHeap.Len() > hk.k {
-		emit = heap.Pop(hk.minHeap).(HeapNode).val
+		evict = heap.Pop(hk.minHeap).(HeapNode).val
 	}
-	return emit, true
+	return evict, true
 }
 
 func (hk *HeavyKeeper) Fade() {
@@ -192,4 +198,8 @@ func (hk *HeavyKeeper) GetTopK() []HeapNode {
 		res = append(res, hk.minHeap.Get(i))
 	}
 	return res
+}
+
+func (hk *HeavyKeeper) Find(s string) bool {
+	return hk.minHeap.Find(s) != -1
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	database "zychimne/instant/internal/db"
@@ -19,7 +18,7 @@ func Register(c *gin.Context) {
 	var user model.User
 	errMsg := "Register error"
 	if err := c.Bind(&user); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	_, err := database.Register(user)
@@ -34,12 +33,12 @@ func GetToken(c *gin.Context) {
 	var user model.User
 	errMsg := "Please check if your account or password is correct"
 	if err := c.Bind(&user); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	key := strings.Join([]string{"token", user.MailBox, user.Password}, ":")
 	if token, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
-		log.Println("Get token error ", err.Error())
+		handleError(nil, err, 0, errMsg, RedisError)
 	} else {
 		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": token})
 		return
@@ -54,8 +53,6 @@ func GetToken(c *gin.Context) {
 		return
 	}
 	token := util.GenerateJwt(user.UserID)
-	if err := database.RedisClient.Set(ctx, key, token, redisExpireTime).Err(); err != nil {
-		log.Println("Redis error ", err.Error())
-	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": token})
+	putInRedis(key, token)
 }

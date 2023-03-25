@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,7 +16,7 @@ func GetFollowings(c *gin.Context) {
 	errMsg := "Get followings error"
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	followings := []model.Following{}
@@ -48,7 +47,7 @@ func GetFollowers(c *gin.Context) {
 	errMsg := "Get followers error"
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	followers := []model.Following{}
@@ -113,7 +112,7 @@ func GetAllUsers(c *gin.Context) {
 	index, err := strconv.ParseInt(c.Query("index"), 0, 64)
 	errMsg := "Get all users error"
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	users := []model.User{}
@@ -144,7 +143,7 @@ func AddFollowing(c *gin.Context) {
 	errMsg := "Add following error"
 	var following model.Following
 	if err := c.Bind(&following); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	following.UserID = userID.(string)
@@ -169,7 +168,7 @@ func RemoveFollowing(c *gin.Context) {
 	errMsg := "Remove following error"
 	var following model.Following
 	if err := c.Bind(&following); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	following.UserID = userID.(string)
@@ -178,15 +177,15 @@ func RemoveFollowing(c *gin.Context) {
 		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
-	err = database.RedisClient.Del(ctx, strings.Join([]string{"recent", userID.(string)}, ":"), strings.Join([]string{"recent", following.FollowingID}, ":")).
-		Err()
-	if err != nil {
-		log.Println("Redis error ", err.Error())
-		return
-	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusAccepted, "message": "accepted",
 	})
+	err = database.RedisClient.Del(ctx, strings.Join([]string{"recent", userID.(string)}, ":"), strings.Join([]string{"recent", following.FollowingID}, ":")).
+		Err()
+	if err != nil {
+		handleError(nil, err, 0, errMsg, RedisError)
+		return
+	}
 }
 
 func GetFriends(c *gin.Context) {
@@ -194,22 +193,13 @@ func GetFriends(c *gin.Context) {
 	errMsg := "Get friends error"
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	key := strings.Join([]string{"recent", userID.(string)}, ":")
-	users := []model.SimpleUser{}
 	if index == 0 {
-		if userJson, err := database.RedisClient.Get(ctx, key).Result(); err != nil {
-			log.Println(errMsg, " ", err.Error())
-		} else {
-			err := json.Unmarshal([]byte(userJson), &users)
-			if err != nil {
-				log.Println("Unmarshal error ", err.Error())
-			} else {
-				c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
-				return
-			}
+		if getFromCache(c, key, database.FriendsCache) {
+			return
 		}
 	}
 	rows, err := database.GetFriends(userID.(string), index, pageSize)
@@ -218,6 +208,7 @@ func GetFriends(c *gin.Context) {
 		return
 	}
 	defer rows.Close(ctx)
+	users := []model.SimpleUser{}
 	for rows.Next(ctx) {
 		var user model.SimpleUser
 		err := rows.Decode(&user)
@@ -231,16 +222,8 @@ func GetFriends(c *gin.Context) {
 		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
 		return
 	}
-	if index == 0 {
-		usersJson, err := json.Marshal(users)
-		if err != nil {
-			handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
-		}
-		if redisExpireTime >= 0 {
-			if err := database.RedisClient.Set(ctx, key, usersJson, redisExpireTime).Err(); err != nil {
-				handleError(c, err, 0, errMsg, RedisError)
-			}
-		}
-	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
+	if index == 0 {
+		putInCache(key, users, database.FriendsCache)
+	}
 }

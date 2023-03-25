@@ -15,7 +15,7 @@ func GetShares(c *gin.Context) {
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	rows, err := database.GetShares(insID, index, pageSize)
@@ -46,7 +46,7 @@ func PostSharingInstants(c *gin.Context) {
 	errMsg := "Post sharing instants error"
 	var share_sentence model.Share
 	if err := c.Bind(&share_sentence); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	share_sentence.UserID = userID.(string)

@@ -15,7 +15,7 @@ func GetInstants(c *gin.Context) {
 	indexStr := c.Query("index")
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	rows, err := database.GetInstants(userID.(string), index, pageSize)
@@ -47,7 +47,7 @@ func GetInstantsByUserID(c *gin.Context) {
 	errMsg := "Get instants error"
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	rows, err := database.GetInstantsByUserID(userID, index, pageSize)
@@ -78,7 +78,7 @@ func PostInstant(c *gin.Context) {
 	errMsg := "Post instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	instant.UserID = userID.(string)
@@ -97,7 +97,7 @@ func UpdateInstant(c *gin.Context) {
 	errMsg := "Update instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	instant.UserID = userID.(string)
@@ -120,7 +120,7 @@ func LikeInstant(c *gin.Context) {
 	errMsg := "Like instant error"
 	var like model.Like
 	if err := c.Bind(&like); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	like.UserID = userID.(string)
@@ -139,7 +139,7 @@ func ShareInstant(c *gin.Context) {
 	errMsg := "Share instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, JsonError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	instant.UserID = userID.(string)
@@ -160,7 +160,7 @@ func GetLikesUserInfo(c *gin.Context) {
 	indexStr := c.Query("index")
 	index, err := strconv.ParseInt(indexStr, 0, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, UndefinedError)
+		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
 		return
 	}
 	rows, err := database.GetLikesUserInfo(insID, index, pageSize)
