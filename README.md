@@ -6,8 +6,9 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 
 * High Performance, High Availability and Scalable
 * Access: RESTful
-* Storage: Redis, Mongodb (https://www.mongodb.com/developer/products/mongodb/mongodb-schema-design-best-practices/)
+* Storage: Redis, [Mongodb](https://www.mongodb.com/developer/products/mongodb/mongodb-schema-design-best-practices/)
 * Fan out on Write
+* [Efficient Flow Counting Algorithm](https://www.usenix.org/system/files/conference/atc18/atc18-gong.pdf) and Hot Spot Detection
 
 ## Project setup
 
@@ -28,7 +29,7 @@ set https_proxy=%http_proxy%
 * [Some High Availability and Hot Spot Improvement](https://mp.weixin.qq.com/s/4T_S7nR8-HXJ59IbK4FBWQ)
 * AVIF Support
 * [Logging System](https://mp.weixin.qq.com/s/dUs7WUKUDOf9lLG6tzdk0g)
-* Hot spot detection and local cache
+* local cache
 
 ## MongoDB 
 
