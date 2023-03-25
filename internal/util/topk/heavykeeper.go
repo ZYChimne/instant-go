@@ -188,8 +188,8 @@ func (hk *HeavyKeeper) Fade() {
 
 func (hk *HeavyKeeper) GetTopK() []HeapNode {
 	var res []HeapNode
-	for hk.minHeap.Len() > 0 {
-		res = append(res, heap.Pop(hk.minHeap).(HeapNode))
+	for i := 0; i < hk.minHeap.Len(); i++ {
+		res = append(res, hk.minHeap.Get(i))
 	}
 	return res
 }
