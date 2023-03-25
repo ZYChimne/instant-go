@@ -16,6 +16,7 @@ const pageSize int64 = 10
 const errorListMaxSize int = 0x10000 // 2^17=65536
 
 var redisExpireTime time.Duration = 0 // 0 means no expire, ONLY FOR DEBUG
+const redisMaxMiss int = 0x10000      // 2^17=65536
 const errorExpireTime int64 = 60      // unit: seconds
 
 const (
@@ -27,7 +28,6 @@ const (
 	PasswordError  = 5
 )
 
-var WarningList *list.List = list.New()
 var UndefinedErrorList *list.List = list.New()
 var JsonErrorList *list.List = list.New()
 var DatabaseErrorList *list.List = list.New()
@@ -62,7 +62,7 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 	switch errCode {
 	case Warning:
 		{
-			updateErrorList(cur, WarningList)
+			// DO NOTHING
 		}
 	case UndefinedError:
 		{
@@ -93,7 +93,7 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 	case RedisError:
 		{
 			updateErrorList(cur, RedisErrorList)
-			if RedisErrorList.Len() > 0x10000 {
+			if RedisErrorList.Len() >= redisMaxMiss {
 				redisExpireTime = -1
 			} else {
 				updateRedisExpireTime()
