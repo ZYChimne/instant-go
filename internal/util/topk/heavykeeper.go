@@ -1,4 +1,4 @@
-package topk
+package topK
 
 // HeavyKeeper: An Accurate Algorithm for Finding Top-k Elephant Flow (https://www.usenix.org/system/files/conference/atc18/atc18-gong.pdf)
 // reference: https://github.com/go-kratos/aegis/blob/main/topk/heavykeeper.go
