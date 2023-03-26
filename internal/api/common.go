@@ -10,6 +10,7 @@ import (
 	"time"
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/internal/util/hotkey"
+	"zychimne/instant/internal/util/lru"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +24,7 @@ const errorListMaxSize int = 0x10000 // 2^17=65536
 var redisExpireTime time.Duration = 0 // 0 means no expire, ONLY FOR DEBUG
 const redisMaxMiss int = 0x10000      // 2^17=65536
 const errorExpireTime int64 = 60      // unit: seconds
+const redisLikeInstantKeysSet string = "like_instant_keys"
 
 const (
 	Warning        = 0
@@ -105,7 +107,7 @@ func updateRedisExpireTime() {
 	}
 }
 
-func handleError(c *gin.Context, err error, code int, message string, errCode int) {
+func handleError(c *gin.Context, err error, httpCode int, message string, errCode int) {
 	if err != nil {
 		log.Println(message, err.Error())
 	} else {
@@ -123,7 +125,7 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 		}
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			gin.H{"code": code, "message": message},
+			gin.H{"code": httpCode, "message": message},
 		)
 	case JsonError:
 		{
@@ -137,7 +139,7 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 		updateRedisExpireTime()
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			gin.H{"code": code, "message": message},
+			gin.H{"code": httpCode, "message": message},
 		)
 	case RedisError:
 		{
@@ -154,15 +156,29 @@ func handleError(c *gin.Context, err error, code int, message string, errCode in
 		}
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			gin.H{"code": code, "message": message},
+			gin.H{"code": httpCode, "message": message},
 		)
 	case BindError:
 		{
 			updateErrorList(cur, BindErrorList)
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				gin.H{"code": code, "message": message},
+				gin.H{"code": httpCode, "message": message},
 			)
 		}
 	}
+}
+
+func onLikeInstantRedis(key string, incr int64) {
+	pipe := database.RedisClient.TxPipeline()
+	pipe.SAdd(ctx, redisLikeInstantKeysSet, key)
+	pipe.IncrBy(ctx, key, incr)
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		handleError(nil, err, 0, "onLikeInstantRedis", RedisError)
+	}
+}
+
+func onLikeInstantEvicted(key lru.Key, value interface{}) {
+	onLikeInstantRedis(key.(string), value.(int64))
 }

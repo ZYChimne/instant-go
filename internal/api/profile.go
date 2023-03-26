@@ -18,7 +18,7 @@ func GetUserProfileDetail(c *gin.Context) {
 	}
 	errMsg := "Get userinfo error"
 	key := strings.Join([]string{"profileDetail", targetID}, ":")
-	if getFromCache(c, key, database.UserCache) {
+	if getFromCache(c, key, UserCache) {
 		return
 	}
 	var user model.User
@@ -28,7 +28,7 @@ func GetUserProfileDetail(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
-	putInCache(key, user, database.UserCache)
+	putInCache(key, user, UserCache)
 }
 
 func GetUserProfile(c *gin.Context) {
@@ -40,7 +40,7 @@ func GetUserProfile(c *gin.Context) {
 	errMsg := "Get userinfo error"
 	key := strings.Join([]string{"profile", targetID}, ":")
 	var user model.SimpleUser
-	if getFromCache(c, key, database.SimpleUserCache) {
+	if getFromCache(c, key, SimpleUserCache) {
 		return
 	}
 	err := database.GetUserProfileByID(targetID).Decode(&user)
@@ -49,7 +49,7 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": user})
-	putInCache(key, user, database.SimpleUserCache)
+	putInCache(key, user, SimpleUserCache)
 }
 
 func QueryUsers(c *gin.Context) {

@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
 
@@ -124,11 +125,17 @@ func LikeInstant(c *gin.Context) {
 		return
 	}
 	like.UserID = userID.(string)
-	err := database.LikeInstant(like)
-	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
+	key := strings.Join([]string{"like", like.InsID}, ":")
+	if item, ok := LikeInstantCache.Get(key); ok {
+		LikeInstantCache.Add(key, item.(int64)+1)
 		return
 	}
+	onLikeInstantRedis(key, 1)
+	// err = database.LikeInstant(like)
+	// if err != nil {
+	// 	handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
+	// 	return
+	// }
 	c.JSON(http.StatusCreated, gin.H{
 		"code": http.StatusCreated,
 	})

@@ -41,11 +41,12 @@ type entry struct {
 // New creates a new Cache.
 // If maxEntries is zero, the cache has no limit and it's assumed
 // that eviction is done by the caller.
-func New(maxEntries int) *Cache {
+func New(maxEntries int, onEvicted func(key Key, value interface{})) *Cache {
 	return &Cache{
 		MaxEntries: maxEntries,
 		ll:         list.New(),
 		cache:      make(map[interface{}]*list.Element),
+		OnEvicted: onEvicted,
 	}
 }
 
@@ -80,7 +81,7 @@ func (c *Cache) Get(key Key) (value interface{}, ok bool) {
 }
 
 // Remove removes the provided key from the cache.
-func (c *Cache) Remove(key Key) {
+func (c *Cache) Remove(key Key)  {
 	if c.cache == nil {
 		return
 	}

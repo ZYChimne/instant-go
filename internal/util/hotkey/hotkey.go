@@ -17,16 +17,16 @@ type HotKeyCache struct {
 }
 
 type LRUItem struct {
-	item      any
-	timestamp int64
+	Item      any
+	Timestamp int64
 }
 
-func NewHotKeyCache(k int, rows uint64, cols uint64, decay float64, minFreq int, cacheExpireTime int64) *HotKeyCache {
+func NewHotKeyCache(k int, rows uint64, cols uint64, decay float64, minFreq int, cacheExpireTime int64, OnEvicted func(key lru.Key, value interface{})) *HotKeyCache {
 	return &HotKeyCache{
 		blackList:       map[string]int64{},
 		whiteList:       map[string]int64{},
 		heavyKeeper:     topK.NewHeavyKeeper(k, rows, cols, decay, minFreq),
-		lruCache:        lru.New(minFreq),
+		lruCache:        lru.New(minFreq, OnEvicted),
 		cacheExpireTime: cacheExpireTime,
 	}
 }
@@ -110,8 +110,8 @@ func (h *HotKeyCache) Get(key string) (any, bool) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	if item, ok := h.lruCache.Get(key); ok {
-		if item.(LRUItem).timestamp+h.cacheExpireTime > time.Now().Unix() {
-			return item.(LRUItem).item, true
+		if item.(LRUItem).Timestamp+h.cacheExpireTime > time.Now().Unix() {
+			return item.(LRUItem).Item, true
 		} else {
 			h.lruCache.Remove(key)
 		}

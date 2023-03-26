@@ -198,7 +198,7 @@ func GetFriends(c *gin.Context) {
 	}
 	key := strings.Join([]string{"recent", userID.(string)}, ":")
 	if index == 0 {
-		if getFromCache(c, key, database.FriendsCache) {
+		if getFromCache(c, key, FriendsCache) {
 			return
 		}
 	}
@@ -224,6 +224,6 @@ func GetFriends(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
 	if index == 0 {
-		putInCache(key, users, database.FriendsCache)
+		putInCache(key, users, FriendsCache)
 	}
 }

@@ -2,7 +2,6 @@ package database
 
 import (
 	"time"
-	"zychimne/instant/pkg/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,7 +14,7 @@ func GetShares(insID string, index int64, pageSize int64) (*mongo.Cursor, error)
 	if err != nil {
 		return nil, err
 	}
-	return mongoDB.Comments.Aggregate(
+	return mongoDB.Shares.Aggregate(
 		ctx,
 		mongo.Pipeline{
 			bson.D{
@@ -52,33 +51,5 @@ func GetShares(insID string, index int64, pageSize int64) (*mongo.Cursor, error)
 				},
 			}},
 		options.Aggregate().SetMaxTime(time.Second*2),
-	)
-}
-
-func PostShare(sharing model.Share) (*mongo.InsertOneResult, error) {
-	instantOID, err := primitive.ObjectIDFromHex(sharing.InsID)
-	if err != nil {
-		return nil, err
-	}
-	userOID, err := primitive.ObjectIDFromHex(sharing.UserID)
-	if err != nil {
-		return nil, err
-	}
-	ForwardedFromID, err := primitive.ObjectIDFromHex(sharing.ForwardedFromID)
-	if err != nil {
-		return nil, err
-	}
-	now := time.Now()
-	return mongoDB.Comments.InsertOne(
-		ctx,
-		bson.M{
-			"created":         now,
-			"lastModified":    now,
-			"insID":           instantOID,
-			"userID":          userOID,
-			"content":         sharing.Content,
-			"ForwardedFromID": ForwardedFromID,
-			"direct":          sharing.Direct,
-		},
 	)
 }

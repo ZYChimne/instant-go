@@ -41,22 +41,3 @@ func GetShares(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": shares})
 }
 
-func PostSharingInstants(c *gin.Context) {
-	userID := c.MustGet("UserID")
-	errMsg := "Post sharing instants error"
-	var share_sentence model.Share
-	if err := c.Bind(&share_sentence); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
-		return
-	}
-	share_sentence.UserID = userID.(string)
-	result, err := database.PostShare(share_sentence)
-	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"data": result.InsertedID,
-	})
-}

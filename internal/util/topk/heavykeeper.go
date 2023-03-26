@@ -42,7 +42,7 @@ func (hkh HeavyKeeperHeap) Top() HeapNode {
 	return hkh.keeper[0]
 }
 
-func (hkh HeavyKeeperHeap) Find(target string) int { // should be O1
+func (hkh HeavyKeeperHeap) Find(target string) int {
 	if index, ok := heapMap[target]; ok {
 		return index
 	}
