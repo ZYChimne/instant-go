@@ -1,47 +1,25 @@
 package database
 
 import (
-	"time"
-	"zychimne/instant/internal/util"
 	"zychimne/instant/pkg/model"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Register(user model.User) (*mongo.InsertOneResult, error) {
-	hash, err := util.HashPassword(user.Password)
-	if err != nil {
-		return nil, err
-	}
-	return mongoDB.Users.InsertOne(
-		ctx,
-		bson.M{
-			"mailbox":      user.MailBox,
-			"phone":        user.Phone,
-			"username":     user.Username,
-			"password":     hash,
-			"created":      time.Now(),
-			"lastModified": time.Now(),
-			"avatar":       user.Avatar,
-			"gender":       user.Gender,
-			"country":      user.Country,
-			"province":     user.Province,
-			"city":         user.City,
-			"birthday":     user.Birthday,
-			"school":       user.School,
-			"company":      user.Company,
-			"job":          user.Job,
-			"myMode":       user.MyMode,
-			"introduction": user.Introduction,
-			"coverPhoto":   user.CoverPhoto,
-			"tags":         user.Tags,
-			"followings":   0,
-			"followers":    0,
-		},
-	)
+func CreateUser(user *model.User) error {
+	return PostgresDB.Create(&user).Error
 }
 
-func GetUser(mailbox string, user *model.User) error {
-	return mongoDB.Users.FindOne(ctx, bson.M{"mailbox": mailbox}).Decode(&user)
+func CreateUsers(users *[]model.User) error {
+	return PostgresDB.Create(&users).Error
+}
+
+func LoginUserByEmail(email string, user *model.User) error {
+	return PostgresDB.Select("id", "password").Where("email = ?", email).First(&user).Error
+}
+
+func LoginUserByPhone(phone string, user *model.User) error {
+	return PostgresDB.Select("id", "password").Where("phone = ?", phone).First(&user).Error
+}
+
+func GetUserByID(id string, user *model.User) error {
+	return PostgresDB.Where("id = ?", id).First(&user).Error
 }

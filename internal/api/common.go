@@ -29,11 +29,11 @@ const redisLikeInstantKeysSet string = "like_instant_keys"
 const (
 	Warning        = 0
 	UndefinedError = 1
-	JsonError      = 2
+	JSONError      = 2
 	DatabaseError  = 3
 	RedisError     = 4
 	PasswordError  = 5
-	BindError      = 6
+	ParameterError      = 6
 )
 
 var UndefinedErrorList *list.List = list.New()
@@ -41,7 +41,7 @@ var JsonErrorList *list.List = list.New()
 var DatabaseErrorList *list.List = list.New()
 var RedisErrorList *list.List = list.New()
 var PasswordErrorList *list.List = list.New()
-var BindErrorList *list.List = list.New()
+var ParameterErrorList *list.List = list.New()
 
 func getFromCache(c *gin.Context, key string, localCache *hotkey.HotKeyCache) bool {
 	item, ok := localCache.Get(key)
@@ -57,7 +57,7 @@ func getFromCache(c *gin.Context, key string, localCache *hotkey.HotKeyCache) bo
 func getFromRedis(c *gin.Context, key string) bool {
 	res, err := database.RedisClient.Get(ctx, key).Result()
 	if err != nil {
-		handleError(nil, err, 0, "Get from redis error", RedisError)
+		handleError(nil, err, "Get from redis error", RedisError)
 		return false
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": res})
@@ -71,14 +71,14 @@ func putInRedis(key string, item interface{}) {
 	} else {
 		bytes, err := json.Marshal(item)
 		if err != nil {
-			handleError(nil, err, 0, "Marshal error", JsonError)
+			handleError(nil, err, "Marshal error", JSONError)
 		}
 		res = string(bytes)
 	}
 	if redisExpireTime >= 0 {
 		err := database.RedisClient.Set(ctx, key, res, redisExpireTime).Err()
 		if err != nil {
-			handleError(nil, err, 0, "Put in redis error", RedisError)
+			handleError(nil, err, "Put in redis error", RedisError)
 		}
 	}
 }
@@ -107,7 +107,9 @@ func updateRedisExpireTime() {
 	}
 }
 
-func handleError(c *gin.Context, err error, httpCode int, message string, errCode int) {
+// handleError handles errors and aborts the request.
+// It updates the error list and redis expire time for high availability optimization.
+func handleError(c *gin.Context, err error, message string, errCode int) {
 	if err != nil {
 		log.Println(message, err.Error())
 	} else {
@@ -125,9 +127,9 @@ func handleError(c *gin.Context, err error, httpCode int, message string, errCod
 		}
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			gin.H{"code": httpCode, "message": message},
+			gin.H{"message": message},
 		)
-	case JsonError:
+	case JSONError:
 		{
 			updateErrorList(cur, JsonErrorList)
 		}
@@ -138,8 +140,8 @@ func handleError(c *gin.Context, err error, httpCode int, message string, errCod
 		}
 		updateRedisExpireTime()
 		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": httpCode, "message": message},
+			http.StatusInternalServerError,
+			gin.H{"message": message},
 		)
 	case RedisError:
 		{
@@ -155,15 +157,15 @@ func handleError(c *gin.Context, err error, httpCode int, message string, errCod
 			updateErrorList(cur, PasswordErrorList)
 		}
 		c.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			gin.H{"code": httpCode, "message": message},
+			http.StatusNetworkAuthenticationRequired,
+			gin.H{"message": message},
 		)
-	case BindError:
+	case ParameterError:
 		{
-			updateErrorList(cur, BindErrorList)
+			updateErrorList(cur, ParameterErrorList)
 			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				gin.H{"code": httpCode, "message": message},
+				http.StatusUnprocessableEntity,
+				gin.H{"message": message},
 			)
 		}
 	}
@@ -175,7 +177,7 @@ func onLikeInstantRedis(key string, incr int64) {
 	pipe.IncrBy(ctx, key, incr)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		handleError(nil, err, 0, "onLikeInstantRedis", RedisError)
+		handleError(nil, err, "onLikeInstantRedis", RedisError)
 	}
 }
 

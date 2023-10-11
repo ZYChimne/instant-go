@@ -1,35 +1,19 @@
 package database
 
 import (
-	"github.com/go-redis/redis/v9"
+	"strings"
+
+	"github.com/redis/go-redis/v9"
+
+	"zychimne/instant/config"
 )
 
 var RedisClient *redis.Client
 
 func ConnectRedis() {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     strings.Join([]string{config.Conf.Redis.Host, config.Conf.Redis.Port}, ":"),
+		Password: config.Conf.Redis.Password,
+		DB:       config.Conf.Redis.Database,
 	})
-
-	// err := rdb.Set(ctx, "key", "value", 0).Err()
-	// if err != nil {
-	//     panic(err)
-	// }
-
-	// val, err := rdb.Get(ctx, "key").Result()
-	// if err != nil {
-	//     panic(err)
-	// }
-	// fmt.Println("key", val)
-
-	// val2, err := rdb.Get(ctx, "key2").Result()
-	// if err == redis.Nil {
-	//     fmt.Println("key2 does not exist")
-	// } else if err != nil {
-	//     panic(err)
-	// } else {
-	//     fmt.Println("key2", val2)
-	// }
 }

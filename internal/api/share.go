@@ -15,12 +15,12 @@ func GetShares(c *gin.Context) {
 	insID := c.Query("insID")
 	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, BindError)
+		handleError(c, err, errMsg, ParameterError)
 		return
 	}
 	rows, err := database.GetShares(insID, index, pageSize)
 	if err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
+		handleError(c, err, errMsg, DatabaseError)
 		return
 	}
 	defer rows.Close(ctx)
@@ -29,13 +29,13 @@ func GetShares(c *gin.Context) {
 		var sharing model.Share
 		err := rows.Decode(&sharing)
 		if err != nil {
-			handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
+			handleError(c, err, errMsg, DatabaseError)
 			return
 		}
 		shares = append(shares, sharing)
 	}
 	if err := rows.Err(); err != nil {
-		handleError(c, err, http.StatusBadRequest, errMsg, DatabaseError)
+		handleError(c, err, errMsg, DatabaseError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": shares})

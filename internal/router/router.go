@@ -1,13 +1,18 @@
 package router
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 	"zychimne/instant/internal/api"
+	database "zychimne/instant/internal/db"
 	"zychimne/instant/internal/util"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/zychimne/gin-cache"
+	"github.com/zychimne/gin-cache/persist"
 )
 
 func Create() {
@@ -19,13 +24,16 @@ func Create() {
 		AllowAllOrigins:  true,
 		MaxAge:           12 * time.Hour,
 	}))
+	redisStore := persist.NewRedisStore(database.RedisClient)
+	// V1 API
+	v1RouterGroup := r.Group("v1")
 	// Auth
-	authRouterGroup := r.Group("auth")
+	authRouterGroup := v1RouterGroup.Group("auth")
 	authRouterGroup.GET("ping", api.Ping)
 	authRouterGroup.POST("register", api.Register)
-	authRouterGroup.POST("getToken", api.GetToken)
+	authRouterGroup.POST("token", api.GetToken)
 	// Instant
-	instantRouterGroup := r.Group("instant").Use(auth())
+	instantRouterGroup := v1RouterGroup.Group("instant").Use(auth())
 	instantRouterGroup.GET("", api.GetInstants)
 	instantRouterGroup.PUT("", api.UpdateInstant)
 	instantRouterGroup.POST("", api.PostInstant)
@@ -34,25 +42,31 @@ func Create() {
 	instantRouterGroup.GET("instants", api.GetInstantsByUserID)
 	instantRouterGroup.GET("like/users", api.GetLikesUserInfo)
 	// Chat
-	chatRouterGroup := r.Group("chat")
+	chatRouterGroup := v1RouterGroup.Group("chat")
 	chatRouterGroup.GET("echo", api.Echo)
+	// chatRouterGroup.GET("history", api.GetChatHistory)
+	chatRouterGroup.POST("", api.Chat)
 	// Comment
-	commentRouterGroup := r.Group("comment").Use(auth())
+	commentRouterGroup := v1RouterGroup.Group("comment").Use(auth())
 	commentRouterGroup.GET("", api.GetComments)
 	commentRouterGroup.POST("", api.PostComment)
 	// commentRouterGroup.POST("like", api.LikeComment)
 	// commentRouterGroup.POST("share", api.ShareComment)
+	// Geo
+	geoRouterGroup := v1RouterGroup.Group("geo")
+	geoRouterGroup.GET("countries", cache.CacheByRequestURI(redisStore, 100*time.Second), api.GetCountries)
+	geoRouterGroup.GET("states", cache.CacheByRequestURI(redisStore, 100*time.Second), api.GetStates)
+	geoRouterGroup.GET("cities", cache.CacheByRequestURI(redisStore, 100*time.Second), api.GetCities)
 	// Relation
-	relationRouterGroup := r.Group("relation").Use(auth())
+	relationRouterGroup := v1RouterGroup.Group("relation").Use(auth())
 	relationRouterGroup.GET("followings", api.GetFollowings)
 	relationRouterGroup.GET("followers", api.GetFollowings)
 	relationRouterGroup.GET("potential", api.GetPotentialFollowings)
 	relationRouterGroup.GET("friends", api.GetFriends)
-	relationRouterGroup.GET("all", api.GetAllUsers)
 	relationRouterGroup.POST("", api.AddFollowing)
 	relationRouterGroup.DELETE("", api.RemoveFollowing)
 	// Profile
-	profileRouterGroup := r.Group("profile").Use(auth())
+	profileRouterGroup := v1RouterGroup.Group("profile").Use(auth())
 	profileRouterGroup.GET("", api.GetUserProfile)
 	profileRouterGroup.GET("detail", api.GetUserProfileDetail)
 	profileRouterGroup.GET("query", api.QueryUsers)
@@ -61,12 +75,15 @@ func Create() {
 
 func auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// log.Println("auth is running")
-		token := c.GetHeader("Authentication")
-		userID, err := util.VerifyJwt(token)
+		token := c.GetHeader("Authorization")
+		if !strings.HasPrefix(token, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid Token"})
+			return
+		}
+		userID, err := util.VerifyJwt(token[7:])
 		if err != nil {
 			log.Println(err.Error())
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid Token"})
 			return
 		}
 		c.Set("UserID", userID)

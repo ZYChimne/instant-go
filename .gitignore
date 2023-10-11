@@ -20,7 +20,7 @@ go.work
 # Custom
 .vscode
 .DS_Store
-redis-7.0.2*
-mongodb-macos-x86_64-5.0.9*
 *.rdb
 .DS_Store
+.env*
+config/*.yml
