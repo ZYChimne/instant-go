@@ -20,7 +20,8 @@ go.work
 # Custom
 .vscode
 .DS_Store
-*.rdb
+redis-*
+mongodb-*
 .DS_Store
 .env*
 config/*.yml
