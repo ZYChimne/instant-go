@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"unicode"
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -71,4 +72,31 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func CheckStrongPassword(s string) bool {
+	if len(s) < 8 {
+		return false
+	}
+	number := false
+	upper := false
+	special := false
+	sevenOrMore := false
+	letters := 0
+	for _, c := range s {
+		switch {
+		case unicode.IsNumber(c):
+			number = true
+		case unicode.IsUpper(c):
+			upper = true
+			letters++
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			special = true
+		case unicode.IsLetter(c) || c == ' ':
+			letters++
+		default:
+		}
+	}
+	sevenOrMore = letters >= 7
+	return number && upper && special && sevenOrMore
 }

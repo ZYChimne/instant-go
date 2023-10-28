@@ -1,6 +1,6 @@
 package schema
 
-type UpdateFollowingRequest struct {
+type UpsertFollowingRequest struct {
 	TargetID uint   `json:"targetID"`
 }
 

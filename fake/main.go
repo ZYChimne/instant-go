@@ -20,7 +20,6 @@ import (
 const TestHttp = true
 const GenerateFakeData = false
 const ServerAddress = "http://localhost:8081"
-const APIVersion = "v1"
 
 // Specific Configurations
 const MaxArraySize = 1000
@@ -29,11 +28,7 @@ const UserCount = 2000000 // 2 million, contains duplicates
 var Token string
 var Client *http.Client
 
-// Default Values
-const DefaultEmail = "zychimne@instant.com"
-const DefaultPhone = "1234567890"
-const DefaultPassword = "Instant123@"
-const DefaultUsername = "zychimne"
+
 
 func request(method string, url string, data []byte) {
 	req, err := http.NewRequest(method, strings.Join([]string{ServerAddress, APIVersion, url}, "/"), bytes.NewReader(data))
@@ -124,6 +119,10 @@ func testAddFollowing() {
 	request(http.MethodPost, "relation", data)
 }
 
+func testGetFollowing() {
+	request(http.MethodGet, "relation/following?offset=0&limit=10", nil)
+}
+
 func testRemoveFollowing() {
 	data, err := json.Marshal(schema.UpdateFollowingRequest{
 		TargetID: 2,
@@ -153,9 +152,9 @@ func fakeUsers() {
 				Email:          gofakeit.Email(),
 				Phone:          gofakeit.Phone(),
 				Password:       hash,
-				Username:       gofakeit.Username()+string(i),
+				Username:       gofakeit.Username()+string(rune(i)),
 				Nickname:       gofakeit.Name(),
-				Type:           1,
+				UserType:           1,
 				Avatar:         "1",
 				Gender:         0,
 				Country:        addr.Country,
@@ -191,6 +190,7 @@ func main() {
 		// testRegister()
 		testGetToken()
 		testAddFollowing()
+		testGetFollowing()
 		testRemoveFollowing()
 	}
 	if GenerateFakeData {

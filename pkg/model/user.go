@@ -13,7 +13,7 @@ type User struct {
 	Password       string
 	Username       string `gorm:"not null;uniqueIndex"`
 	Nickname       string
-	Type           int
+	UserType       int
 	Avatar         string
 	Gender         int
 	Country        string
@@ -31,4 +31,12 @@ type User struct {
 	FollowerCount  int
 	Followings     []Following `gorm:"foreignKey:UserID"`
 	Followers      []Following `gorm:"foreignKey:TargetID"`
+}
+
+type BasicUser struct {
+	UserID   uint
+	Username string
+	Nickname string
+	Avatar   string
+	UserType int
 }

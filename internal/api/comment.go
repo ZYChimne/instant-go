@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	database "zychimne/instant/internal/db"
@@ -11,51 +13,48 @@ import (
 
 func GetComments(c *gin.Context) {
 	_ = c.MustGet("UserID")
-	errMsg := "Get comments error"
-	insID := c.Query("insID")
-	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
+	instantID, err := strconv.ParseUint(c.Query("instantID"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetCommentsError))
 		return
 	}
-	rows, err := database.GetComments(insID, index, pageSize)
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetCommentsError))
 		return
 	}
-	defer rows.Close(ctx)
-	comments := []model.Comment{}
-	for rows.Next(ctx) {
-		var comment model.Comment
-		err := rows.Decode(&comment)
-		if err != nil {
-			handleError(c, err, errMsg, DatabaseError)
-			return
-		}
-		comments = append(comments, comment)
-	}
-	if err := rows.Err(); err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetCommentsError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": comments})
+	var comments []model.Comment
+	err = database.GetComments(uint(instantID), int(offset), int(limit), &comments)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetCommentsError))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": comments})
 }
 
-func PostComment(c *gin.Context) {
+func AddComment(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Post comment error"
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(AddCommentError))
 		return
 	}
-	comment.UserID = userID.(string)
-	result, err := database.PostComment(comment) // TODO: use Redis
+	comment.UserID = userID.(uint)
+	err := database.AddComment(&comment)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(AddCommentError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK, "data": result.InsertedID,
-	})
+	c.JSON(http.StatusCreated, gin.H{"data": comment.ID})
 }

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	database "zychimne/instant/internal/db"
@@ -12,43 +14,23 @@ import (
 
 func GetFollowings(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFollowingsError))
 		return
 	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	followings := []model.Following{}
-	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &followings)
-	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": followings})
-}
-
-func GetJointFollowings(c *gin.Context) {
-	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
-	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFollowingsError))
 		return
 	}
 	followings := []model.JointFollowing{}
-	err = database.GetJointFollowings(userID.(uint), int(offset), int(limit), &followings)
+	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &followings)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFollowingsError))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": followings})
@@ -56,43 +38,23 @@ func GetJointFollowings(c *gin.Context) {
 
 func GetFollowers(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFollowersError))
 		return
 	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	followers := []model.Following{}
-	err = database.GetFollowers(userID.(uint), int(offset), int(limit), &followers)
-	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": followers})
-}
-
-func GetJointFollowers(c *gin.Context) {
-	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
-	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFollowersError))
 		return
 	}
 	followers := []model.JointFollowing{}
-	err = database.GetJointFollowers(userID.(uint), int(offset), int(limit), &followers)
+	err = database.GetFollowers(userID.(uint), int(offset), int(limit), &followers)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFollowersError))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": followers})
@@ -100,110 +62,89 @@ func GetJointFollowers(c *gin.Context) {
 
 func GetPotentialFollowings(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Get potential following error"
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, UndefinedError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetPotentialFollowingsError))
 		return
 	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetPotentialFollowingsError))
 		return
 	}
 	users := []model.User{}
 	err = database.GetPotentialFollowings(userID.(uint), int(offset), int(limit), &users)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetPotentialFollowingsError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": users})
+	c.JSON(http.StatusOK, gin.H{"data": users})
 }
 
-func AddFollowing(c *gin.Context) {
+func Follow(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Add following error"
-	var followingSchema schema.UpdateFollowingRequest
+	var followingSchema schema.UpsertFollowingRequest
 	if err := c.Bind(&followingSchema); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(FollowError))
 		return
 	}
-	following:=model.Following{
-		UserID: userID.(uint),
+	following := model.Following{
+		UserID:   userID.(uint),
 		TargetID: followingSchema.TargetID,
-	}	
+	}
 	err := database.AddFollowing(&following)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(FollowError))
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "created",
-	})
+	c.JSON(http.StatusCreated, gin.H{"data": following.ID})
 }
 
-func RemoveFollowing(c *gin.Context) {
+func Unfollow(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Remove following error"
-	var followingSchema schema.UpdateFollowingRequest
+	var followingSchema schema.UpsertFollowingRequest
 	if err := c.Bind(&followingSchema); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(UnfollowError))
 		return
 	}
-	following:=model.Following{
-		UserID: userID.(uint),
+	following := model.Following{
+		UserID:   userID.(uint),
 		TargetID: followingSchema.TargetID,
-	}	
+	}
 	err := database.RemoveFollowing(&following)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(UnfollowError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"message": "deleted",
-	})
+	c.Status(http.StatusOK)
 }
 
 func GetFriends(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFriendsError))
 		return
 	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	friends := []model.Following{}
-	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &friends)
-	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": friends})
-}
-
-
-func GetJointFriends(c *gin.Context) {
-	userID := c.MustGet("UserID")
-	errMsg := "Get followings error"
-	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFriendsError))
 		return
 	}
 	friends := []model.JointFollowing{}
-	err = database.GetJointFollowings(userID.(uint), int(offset), int(limit), &friends)
+	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &friends)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFriendsError))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": friends})

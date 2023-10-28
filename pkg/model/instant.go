@@ -1,17 +1,27 @@
 package model
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 type Instant struct {
-	InsID        string    `json:"insID"        bson:"_id"`
-	UserID       string    `json:"userID"`
-	Username     string    `json:"username"`
-	Avatar       int       `json:"avatar"`
-	Created      time.Time `json:"created"`
-	LastModified time.Time `json:"lastModified"`
-	Content      string    `json:"content"`
-	RefOriginID  string    `json:"refOriginID"`
-	Likes        int       `json:"likes"`
-	Shares       int       `json:"shares"`
-	Attitude     int       `json:"attitude"`
+	gorm.Model
+	BasicUser
+	InstantType  int
+	Content      string
+	RefOriginID  uint
+	LikeCount    int
+	CommentCount int
+	ShareCount   int
+	Likes        []Like    `gorm:"foreignKey:InstantID"`
+	Comments     []Comment `gorm:"foreignKey:InstantID"`
+}
+
+type Feed struct {
+	gorm.Model
+	InstantID   uint
+	UserID      uint
+	IsCommented bool
+	IsShared    bool
+	Attitude    int
 }

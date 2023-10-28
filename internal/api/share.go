@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	database "zychimne/instant/internal/db"
@@ -11,33 +13,48 @@ import (
 
 func GetShares(c *gin.Context) {
 	_ = c.MustGet("UserID")
-	errMsg := "Get shares error"
-	insID := c.Query("insID")
-	index, err := strconv.ParseInt(c.Query("index"), 10, 64)
+	instantID, err := strconv.ParseUint(c.Query("instantID"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetSharesError))
 		return
 	}
-	rows, err := database.GetShares(insID, index, pageSize)
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetSharesError))
 		return
 	}
-	defer rows.Close(ctx)
-	shares := []model.Share{}
-	for rows.Next(ctx) {
-		var sharing model.Share
-		err := rows.Decode(&sharing)
-		if err != nil {
-			handleError(c, err, errMsg, DatabaseError)
-			return
-		}
-		shares = append(shares, sharing)
-	}
-	if err := rows.Err(); err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetSharesError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": shares})
+	var instants []model.Instant
+	err = database.GetShares(uint(instantID), int(offset), int(limit), &instants)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetSharesError))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": instants})
 }
 
+func ShareInstant(c *gin.Context) {
+	userID := c.MustGet("UserID")
+	var instant model.Instant
+	if err := c.Bind(&instant); err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(ShareInstantError))
+		return
+	}
+	instant.UserID = userID.(uint)
+	err := database.ShareInstant(&instant)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(ShareInstantError))
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"data": instant.ID})
+}

@@ -1,198 +1,108 @@
 package api
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/pkg/model"
-	"zychimne/instant/pkg/schema"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetInstants(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Get instants error"
-	indexStr := c.Query("index")
-	index, err := strconv.ParseInt(indexStr, 0, 64)
+	_targetID := c.Query("userID")
+	if len(_targetID) == 0 {
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantsError))
+		return
+	}
+	targetID, err := strconv.ParseUint(_targetID, 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantsError))
 		return
 	}
-	rows, err := database.GetInstants(userID.(string), index, pageSize)
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantsError))
 		return
 	}
-	defer rows.Close(ctx)
-	instants := []model.Instant{}
-	for rows.Next(ctx) {
-		var instant model.Instant
-		err := rows.Decode(&instant)
-		if err != nil {
-			handleError(c, err, errMsg, DatabaseError)
-			return
-		}
-		instants = append(instants, instant)
-	}
-	if err := rows.Err(); err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantsError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
+	var instants []model.Instant
+	err = database.GetInstants(userID.(uint), uint(targetID), int(offset), int(limit), &instants)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetInstantsError))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": instants})
 }
 
-func GetInstantsByUserID(c *gin.Context) {
-	userID := c.Query("userID")
-	indexStr := c.Query("index")
-	errMsg := "Get instants error"
-	index, err := strconv.ParseInt(indexStr, 0, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	rows, err := database.GetInstantsByUserID(userID, index, pageSize)
-	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	defer rows.Close(ctx)
-	instants := []model.Instant{}
-	for rows.Next(ctx) {
-		var instant model.Instant
-		err := rows.Decode(&instant)
-		if err != nil {
-			handleError(c, err, errMsg, DatabaseError)
-			return
-		}
-		instants = append(instants, instant)
-	}
-	if err := rows.Err(); err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "data": instants})
-}
-
-func PostInstant(c *gin.Context) {
+func AddInstant(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Post instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(AddInstantError))
 		return
 	}
-	instant.UserID = userID.(string)
-	err := database.PostInstant(instant)
+	instant.UserID = userID.(uint)
+	err := database.AddInstant(&instant)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(AddInstantError))
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"code": http.StatusCreated,
-	})
+	c.JSON(http.StatusCreated, gin.H{"data": instant.ID})
 }
 
 func UpdateInstant(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Update instant error"
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(AddInstantError))
 		return
 	}
-	instant.UserID = userID.(string)
-	result, err := database.UpdateInstant(instant)
+	instant.UserID = userID.(uint)
+	err := database.UpdateInstant(&instant)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(AddInstantError))
 		return
 	}
-	if result.ModifiedCount == 0 {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusCreated,
-	})
+	c.Status(http.StatusOK)
 }
 
-func LikeInstant(c *gin.Context) {
+func DeleteInstant(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	errMsg := "Like instant error"
-	var like model.Like
-	if err := c.Bind(&like); err != nil {
-		handleError(c, err, errMsg, ParameterError)
+	_instantID := c.Query("instantID")
+	if len(_instantID) == 0 {
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(DeleteInstantError))
 		return
 	}
-	like.UserID = userID.(string)
-	key := strings.Join([]string{"like", like.InsID}, ":")
-	if item, ok := LikeInstantCache.Get(key); ok {
-		LikeInstantCache.Add(key, item.(int64)+1)
+	instantID, err := strconv.ParseUint(_instantID, 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(DeleteInstantError))
 		return
 	}
-	onLikeInstantRedis(key, 1)
-	// err = database.LikeInstant(like)
-	// if err != nil {
-	// 	handleError(c, err, errMsg, DatabaseError)
-	// 	return
-	// }
-	c.JSON(http.StatusCreated, gin.H{
-		"code": http.StatusCreated,
-	})
-}
-
-func ShareInstant(c *gin.Context) {
-	userID := c.MustGet("UserID")
-	errMsg := "Share instant error"
 	var instant model.Instant
-	if err := c.Bind(&instant); err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	instant.UserID = userID.(string)
-	_, err := database.ShareInstant(instant)
+	instant.ID = uint(instantID)
+	instant.UserID = userID.(uint)
+	err = database.DeleteInstant(&instant)
 	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(DeleteInstantError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-	})
-}
-
-func GetLikesUserInfo(c *gin.Context) {
-	_ = c.MustGet("UserID")
-	errMsg := "Get like description error"
-	insID := c.Query("insID")
-	indexStr := c.Query("index")
-	index, err := strconv.ParseInt(indexStr, 0, 64)
-	if err != nil {
-		handleError(c, err, errMsg, ParameterError)
-		return
-	}
-	rows, err := database.GetLikesUserInfo(insID, index, pageSize)
-	if err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	defer rows.Close(ctx)
-	userInfos := []schema.BasicUser{}
-	for rows.Next(ctx) {
-		var userInfo schema.BasicUser
-		err := rows.Decode(&userInfo)
-		if err != nil {
-			handleError(c, err, errMsg, DatabaseError)
-			return
-		}
-		userInfos = append(userInfos, userInfo)
-	}
-	if err := rows.Err(); err != nil {
-		handleError(c, err, errMsg, DatabaseError)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"data": userInfos,
-	})
+	c.Status(http.StatusOK)
 }

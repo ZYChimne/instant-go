@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
-	config.LoadConfig()
+	config.LoadConfig("config/dev.yml")
 	database.ConnectPostgres()
 	database.ConnectRedis()
-	router.Create()
+	r := router.Create(true)
+	r.Run(":" + config.Conf.Instant.Port)
 }

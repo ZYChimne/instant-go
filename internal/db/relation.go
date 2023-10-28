@@ -7,19 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetFollowings(userID uint, offset int, limit int, followings *[]model.Following) error {
-	return PostgresDB.Where("user_id = ?", userID).Order("id desc").Limit(limit).Offset(offset).Find(&followings).Error
-}
-
-func GetJointFollowings(userID uint, offset int, limit int, jointFollowing *[]model.JointFollowing) error {
+func GetFollowings(userID uint, offset int, limit int, jointFollowing *[]model.JointFollowing) error {
 	return PostgresDB.Table("followings").Select("followings.*, users.username, users.nickname, users.avatar").Joins("left join users on followings.target_id = users.id").Where("followings.user_id = ?", userID).Order("id desc").Limit(limit).Offset(offset).Scan(&jointFollowing).Error
 }
 
-func GetFollowers(userID uint, offset int, limit int, followers *[]model.Following) error {
-	return PostgresDB.Where("target_id = ?", userID).Order("id desc").Limit(limit).Offset(int(offset)).Find(&followers).Error
-}
-
-func GetJointFollowers(userID uint, offset int, limit int, followerResponses *[]model.JointFollowing) error {
+func GetFollowers(userID uint, offset int, limit int, followerResponses *[]model.JointFollowing) error {
 	return PostgresDB.Table("following").Select("followings.*, users.username, users.nickname, users.avatar").Joins("left join users on followings.user_id = users.id").Where("followings.target_id = ?", userID).Order("id desc").Limit(limit).Offset(offset).Scan(&followerResponses).Error
 }
 
@@ -55,7 +47,7 @@ func AddFollowing(following *model.Following) error {
 		tx.Rollback()
 		return err
 	}
-	following.TargetType = targetUser.Type
+	following.TargetType = targetUser.UserType
 	if err := tx.Create(&following).Error; err != nil {
 		tx.Rollback()
 		return err
@@ -103,10 +95,6 @@ func RemoveFollowing(following *model.Following) error {
 	return tx.Commit().Error
 }
 
-func GetFriends(userID uint, offset int, limit int, friends *[]model.Following) error {
-	return PostgresDB.Where("user_id = ?", userID).Where("is_friend = ?", true).Order("id desc").Limit(limit).Offset(offset).Find(&friends).Error
-}
-
-func GetJointFriends(userID uint, offset int, limit int, friends *[]model.JointFollowing) error {
+func GetFriends(userID uint, offset int, limit int, friends *[]model.JointFollowing) error {
 	return PostgresDB.Table("followings").Select("followings.*, users.username, users.nickname, users.avatar").Joins("left join users on followings.target_id = users.id").Where("followings.user_id = ?", userID).Where("followings.is_friend = ?", true).Order("id desc").Limit(limit).Offset(offset).Scan(&friends).Error
 }

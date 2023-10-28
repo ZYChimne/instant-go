@@ -1,17 +1,17 @@
 package database
 
 import (
-	"zychimne/instant/pkg/model"
+	"zychimne/instant/pkg/schema"
 )
 
-func GetCountries(countries *[]model.Country) error {
-	return PostgresDB.Select("id", "name").Find(&countries).Error
+func GetCountries(countries *[]schema.CountryResponse) error {
+	return PostgresDB.Table("countries").Select("id", "name").Scan(&countries).Error
 }
 
-func GetStatesByCountryID(cID uint, states *[]model.State) error {
-	return PostgresDB.Select("id", "name").Where("country_id = ?", cID).Find(&states).Error
+func GetStatesByCountryID(cID uint, states *[]schema.StateResponse) error {
+	return PostgresDB.Table("states").Select("id", "name").Where("country_id = ?", cID).Scan(&states).Error
 }
 
-func GetCitiesByStateID(sID uint, cities *[]model.City) error {
-	return PostgresDB.Select("id", "name").Where("state_id = ?", sID).Find(&cities).Error
+func GetCitiesByStateID(sID uint, cities *[]schema.CityResponse) error {
+	return PostgresDB.Table("cities").Select("id", "name").Where("state_id = ?", sID).Scan(&cities).Error
 }

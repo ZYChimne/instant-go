@@ -1,78 +1,58 @@
 package api
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
 	database "zychimne/instant/internal/db"
-	"zychimne/instant/pkg/model"
 	"zychimne/instant/pkg/schema"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetCountries(c *gin.Context) {
-	var countries []model.Country
+	var countries []schema.CountryResponse
 	err := database.GetCountries(&countries)
 	if err != nil {
-		handleError(c, err, "Database Error", DatabaseError)
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetCountriesError))
+		return
 	}
-	resp := make([]schema.CountryResponse, len(countries))
-	for i, country := range countries {
-		resp[i] = schema.CountryResponse{
-			ID:   country.ID,
-			Name: country.Name,
-		}
-	}
-	c.JSON(http.StatusOK, gin.H{"data": resp})
+	c.JSON(http.StatusOK, gin.H{"data": countries})
 }
 
 func GetStates(c *gin.Context) {
-	cID := c.Query("cID")
-	errMsg := "Country ID is required"
-	if cID == "" {
-		handleError(c, nil, errMsg, ParameterError)
-	}
-	id, err := strconv.ParseUint(cID, 10, 64)
+	cID, err := strconv.ParseUint(c.Query("cID"), 10, 64)
 	if err != nil {
-		handleError(c, nil, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetStatesError))
+		return
 	}
-	var states []model.State
-	err = database.GetStatesByCountryID(uint(id), &states)
+	var states []schema.StateResponse
+	err = database.GetStatesByCountryID(uint(cID), &states)
 	if err != nil {
-		handleError(c, err, "Database Error", DatabaseError)
-	}
-	resp := make([]schema.StateResponse, len(states))
-	for i, state := range states {
-		resp[i] = schema.StateResponse{
-			ID:   state.ID,
-			Name: state.Name,
-		}
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetStatesError))
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": states})
 }
 
 func GetCities(c *gin.Context) {
-	sID := c.Query("sID")
-	errMsg := "State ID is required"
-	if sID == "" {
-		handleError(c, nil, errMsg, ParameterError)
-	}
-	id, err := strconv.ParseUint(sID, 10, 64)
+	sID, err := strconv.ParseUint(c.Query("sID"), 10, 64)
 	if err != nil {
-		handleError(c, nil, errMsg, ParameterError)
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetCitiesError))
+		return
 	}
-	var cities []model.City
-	err = database.GetCitiesByStateID(uint(id), &cities)
+	var cities []schema.CityResponse
+	err = database.GetCitiesByStateID(uint(sID), &cities)
 	if err != nil {
-		handleError(c, err, "DatabaseError", DatabaseError)
-	}
-	resp := make([]schema.CityResponse, len(cities))
-	for i, city := range cities {
-		resp[i] = schema.CityResponse{
-			ID:   city.ID,
-			Name: city.Name,
-		}
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetCitiesError))
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{ "data": cities})
 }

@@ -1,84 +1,66 @@
 package database
 
 import (
-	"time"
 	"zychimne/instant/pkg/model"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/gorm"
 )
 
-func GetComments(insID string, index int64, pageSize int64) (*mongo.Cursor, error) {
-	oID, err := primitive.ObjectIDFromHex(insID)
-	if err != nil {
-		return nil, err
-	}
-	return mongoDB.Comments.Aggregate(
-		ctx,
-		mongo.Pipeline{
-			bson.D{
-				{Key: "$match", Value: bson.M{"insID": oID}},
-			},
-			bson.D{{Key: "$sort", Value: bson.M{"_id": -1}}},
-			bson.D{{Key: "$skip", Value: index}},
-			bson.D{{Key: "$limit", Value: pageSize}},
-			bson.D{{
-				Key: "$lookup",
-				Value: bson.M{
-					"from":         "users",
-					"localField":   "userID",
-					"foreignField": "_id",
-					"as":           "users",
-					"pipeline": bson.A{
-						bson.D{
-							{
-								Key:   "$project",
-								Value: bson.M{"userID": 1, "username": 1, "avatar": 1},
-							},
-						},
-					},
-				},
-			}},
-			bson.D{
-				{
-					Key: "$replaceRoot",
-					Value: bson.M{
-						"newRoot": bson.M{
-							"$mergeObjects": bson.A{bson.M{"$first": "$users"}, "$$ROOT"},
-						},
-					},
-				},
-			}},
-		options.Aggregate().SetMaxTime(time.Second*2),
-	)
+func GetComments(instantID uint, offset int, limit int, comments *[]model.Comment) error {
+	return PostgresDB.Table("comments").Where("instant_id = ?", instantID).Order("created desc").Offset(offset).Limit(limit).Scan(&comments).Error
 }
 
-func PostComment(comment model.Comment) (*mongo.InsertOneResult, error) {
-	instantOID, err := primitive.ObjectIDFromHex(comment.InsID)
-	if err != nil {
-		return nil, err
+func AddComment(comment *model.Comment) error {
+	var user model.BasicUser
+	user.UserID = comment.UserID
+	if err := GetBasicAccount(&user); err != nil {
+		return err
 	}
-	userOID, err := primitive.ObjectIDFromHex(comment.UserID)
-	if err != nil {
-		return nil, err
+	comment.Username = user.Username
+	comment.Nickname = user.Nickname
+	comment.Avatar = user.Avatar
+	comment.UserType = user.UserType
+	tx := PostgresDB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		return err
 	}
-	replyToOID, err := primitive.ObjectIDFromHex(comment.ReplyToID)
+	err := tx.Create(&comment).Error
 	if err != nil {
-		return nil, err
+		tx.Rollback()
+		return err
 	}
-	now := time.Now()
-	return mongoDB.Comments.InsertOne(
-		ctx,
-		bson.M{
-			"created":      now,
-			"lastModified": now,
-			"insID":        instantOID,
-			"userID":       userOID,
-			"content":      comment.Content,
-			"replyToID":    replyToOID,
-			"direct":       comment.Direct,
-		},
-	)
+	err = tx.Table("instants").Where("id = ?", comment.InstantID).Update("commentCount", gorm.Expr("commentCount + ?", 1)).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
+}
+
+func DeleteComment(comment *model.Comment) error {
+	tx := PostgresDB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		return err
+	}
+	err := tx.Where("id = ?", comment.ID).Where("user_id = ?", comment.UserID).Limit(1).Delete(&comment).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	err = tx.Table("instants").Where("id = ?", comment.InstantID).Update("commentCount", gorm.Expr("commentCount - ?", 1)).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }
