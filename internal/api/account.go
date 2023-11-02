@@ -76,7 +76,9 @@ func CreateAccount(c *gin.Context) {
 
 func DeleteAccount(c *gin.Context) {
 	userID := c.MustGet("UserID")
-	err := database.DeleteAccountByID(userID.(uint))
+	var user model.User
+	user.ID = userID.(uint)
+	err := database.DeleteAccountByID(&user)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(DeleteAccountError))
@@ -88,7 +90,7 @@ func DeleteAccount(c *gin.Context) {
 func GetAccount(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	targetID := c.Query("userID")
-	var user model.User
+	var user schema.AccountResponse
 	if len(targetID) > 0 {
 		targetUInt, err := strconv.ParseUint(targetID, 10, 64)
 		if err != nil {
@@ -101,7 +103,6 @@ func GetAccount(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, errors.New(GetAccountError))
 			return
 		}
-		user.Password = ""
 		c.JSON(http.StatusOK, gin.H{"data": user})
 		return
 	}
@@ -117,7 +118,6 @@ func GetAccount(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, errors.New(GetAccountError))
 			return
 		}
-		user.Password = ""
 		c.JSON(http.StatusOK, gin.H{"data": user})
 		return
 	}
@@ -134,7 +134,6 @@ func GetAccount(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, errors.New(GetAccountError))
 			return
 		}
-		user.Password = ""
 		c.JSON(http.StatusOK, gin.H{"data": user})
 		return
 	}
@@ -145,12 +144,10 @@ func GetAccount(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, errors.New(GetAccountError))
 			return
 		}
-		user.Password = ""
 		c.JSON(http.StatusOK, gin.H{"data": user})
 		return
 	}
 	database.GetAccountByID(userID.(uint), &user)
-	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
 
@@ -163,15 +160,17 @@ func SearchAccounts(c *gin.Context) {
 	}
 	offset, err := strconv.ParseInt(c.Query("offset"), 0, 64)
 	if err != nil {
+		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(SearchAccountsError))
 		return
 	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 0, 64)
 	if err != nil {
+		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(SearchAccountsError))
 		return
 	}
-	var users []model.User
+	var users []schema.BasicAccountResponse // TODO add relationship
 	err = database.SearchAccounts(keyword, int(offset), int(limit), &users)
 	if err != nil {
 		log.Println(err)
@@ -179,4 +178,64 @@ func SearchAccounts(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": users})
+}
+
+func CheckIfAccountExists(c *gin.Context) {
+	email := c.Query("email")
+	var exists int64
+	if len(email) > 0 {
+		if _, err := mail.ParseAddress(email); err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusUnprocessableEntity, errors.New(CheckIfAccountExistsError))
+			return
+		}
+		err := database.CheckIfAccountExistsByEmail(email, &exists)
+		if err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New(CheckIfAccountExistsError))
+			return
+		}
+		if exists > 0 {
+			c.JSON(http.StatusOK, gin.H{"data": 1})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": 0})
+		return
+	}
+	phone := c.Query("phone")
+	if len(phone) > 0 {
+		for _, char := range phone {
+			if char < '0' || char > '9' {
+				c.AbortWithError(http.StatusUnprocessableEntity, errors.New(CheckIfAccountExistsError))
+				return
+			}
+		}
+		err := database.CheckIfAccountExistsByPhone(phone, &exists)
+		if err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New(CheckIfAccountExistsError))
+			return
+		}
+		if exists > 0 {
+			c.JSON(http.StatusOK, gin.H{"data": 1})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": 0})
+		return
+	}
+	username := c.Query("username")
+	if len(username) > 0 {
+		err := database.CheckIfAccountExistsByUsername(username, &exists)
+		if err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New(CheckIfAccountExistsError))
+			return
+		}
+		if exists > 0 {
+			c.JSON(http.StatusOK, gin.H{"data": 1})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": 0})
+		return
+	}
 }

@@ -38,7 +38,6 @@ type AccountResponse struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 	Email        string    `json:"email"`
 	Phone        string    `json:"phone"`
-	Password     string    `json:"password"`
 	Username     string    `json:"username" `
 	Nickname     string    `json:"nickname"`
 	Avatar       string    `json:"avatar"`
@@ -60,15 +59,14 @@ type AccountResponse struct {
 
 type BasicAccountResponse struct {
 	ID       uint   `json:"userID"`
-	Nickname string `json:"nickname"`
 	Username string `json:"username"`
+	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
+	UserType int    `json:"userType"`
 }
 
 type QueryAccountResponse struct {
-	ID          uint   `json:"userID"`
-	Username    string `json:"username"`
-	Avatar      string `json:"avatar"`
-	IsFollowing bool   `json:"isFollowing"`
-	IsFriend    bool   `json:"isFriend"`
+	BasicAccountResponse
+	IsFollowing bool `json:"isFollowing"`
+	IsFriend    bool `json:"isFriend"`
 }

@@ -54,5 +54,5 @@ func GetCities(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetCitiesError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{ "data": cities})
+	c.JSON(http.StatusOK, gin.H{"data": cities})
 }

@@ -14,7 +14,7 @@ import (
 // The Feed in an inbox with a message upper bound
 // It does not retrieve messages beyond that upper bound (ex. Instagram)
 // Instead, display trending post for the user
-func GetFeed(c *gin.Context){
+func GetFeed(c *gin.Context) {
 	userID := c.MustGet("UserID")
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
@@ -22,7 +22,7 @@ func GetFeed(c *gin.Context){
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFeedError))
 		return
 	}
-	limit, err:= strconv.ParseInt(c.Query("limit"), 10, 64)
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFeedError))

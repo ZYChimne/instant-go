@@ -28,8 +28,6 @@ const UserCount = 2000000 // 2 million, contains duplicates
 var Token string
 var Client *http.Client
 
-
-
 func request(method string, url string, data []byte) {
 	req, err := http.NewRequest(method, strings.Join([]string{ServerAddress, APIVersion, url}, "/"), bytes.NewReader(data))
 	if err != nil {
@@ -152,9 +150,9 @@ func fakeUsers() {
 				Email:          gofakeit.Email(),
 				Phone:          gofakeit.Phone(),
 				Password:       hash,
-				Username:       gofakeit.Username()+string(rune(i)),
+				Username:       gofakeit.Username() + string(rune(i)),
 				Nickname:       gofakeit.Name(),
-				UserType:           1,
+				UserType:       1,
 				Avatar:         "1",
 				Gender:         0,
 				Country:        addr.Country,

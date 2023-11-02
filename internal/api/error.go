@@ -5,6 +5,7 @@ const CreateAccountError = "create account error"
 const DeleteAccountError = "delete account error"
 const GetAccountError = "get account error"
 const SearchAccountsError = "search accounts error"
+const CheckIfAccountExistsError = "check if account exists error"
 
 // Auth
 const LoginError = "please check if your account or password is correct"
@@ -25,7 +26,7 @@ const GetLikesError = "get likes error"
 
 // Comment
 const GetCommentsError = "get comments error"
-const AddCommentError = "Add comment error"
+const AddCommentError = "add comment error"
 
 // Share
 const ShareInstantError = "share instant error"

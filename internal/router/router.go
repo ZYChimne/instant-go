@@ -24,7 +24,7 @@ func Create(useCors bool) *gin.Engine {
 		}))
 	}
 	r.Use(middleware.Error())
-	localStore := persist.NewMemoryStore(1*time.Minute)
+	localStore := persist.NewMemoryStore(1 * time.Minute)
 	redisStore := persist.NewRedisStore(database.RedisClient)
 	// V1 API
 	v1RouterGroup := r.Group("v1")
@@ -33,6 +33,7 @@ func Create(useCors bool) *gin.Engine {
 	// Account
 	accountRouterGroup := v1RouterGroup.Group("account")
 	accountRouterGroup.POST("", api.CreateAccount)
+	accountRouterGroup.GET("check", cache.CacheByRequestURI(redisStore, 1*time.Minute), api.CheckIfAccountExists)
 	accountRouterGroupWithAuth := accountRouterGroup.Group("").Use(middleware.Auth())
 	accountRouterGroupWithAuth.DELETE("", api.DeleteAccount)
 	accountRouterGroupWithAuth.GET("", api.GetAccount)
@@ -41,7 +42,7 @@ func Create(useCors bool) *gin.Engine {
 	authRouterGroup := v1RouterGroup.Group("auth")
 	authRouterGroup.POST("token", api.GetToken)
 	// Feed
-	feedRouterGroup:=v1RouterGroup.Group("feed").Use(middleware.Auth())
+	feedRouterGroup := v1RouterGroup.Group("feed").Use(middleware.Auth())
 	feedRouterGroup.GET("", api.GetFeed)
 	// Instant
 	instantRouterGroup := v1RouterGroup.Group("instant").Use(middleware.Auth())

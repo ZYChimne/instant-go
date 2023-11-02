@@ -11,12 +11,12 @@ type Following struct {
 }
 
 type JointFollowing struct {
-	ID          uint
-	UserID      uint
-	TargetID    uint
-	IsFriend    bool
+	ID       uint
+	UserID   uint
+	TargetID uint
+	IsFriend bool
 	UserType int
-	Username    string
-	Nickname    string
-	Avatar      string
+	Username string
+	Nickname string
+	Avatar   string
 }
