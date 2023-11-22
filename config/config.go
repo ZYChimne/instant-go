@@ -29,12 +29,12 @@ type OpenAIConfig struct {
 }
 
 type CorsConfig struct {
-	Enabled      bool          `yaml:"enabled"      json:"enabled"`
-	AllowOrigins []string      `yaml:"allow_origins" json:"allow_origins"`
-	AllowMethods []string      `yaml:"allow_methods" json:"allow_methods"`
-	AllowHeaders []string      `yaml:"allow_headers" json:"allow_headers"`
-	AllowCreds   bool          `yaml:"allow_creds"   json:"allow_creds"`
-	MaxAge       int `yaml:"max_age"       json:"max_age"`
+	Enabled      bool     `yaml:"enabled"      json:"enabled"`
+	AllowOrigins []string `yaml:"allow_origins" json:"allow_origins"`
+	AllowMethods []string `yaml:"allow_methods" json:"allow_methods"`
+	AllowHeaders []string `yaml:"allow_headers" json:"allow_headers"`
+	AllowCreds   bool     `yaml:"allow_creds"   json:"allow_creds"`
+	MaxAge       int      `yaml:"max_age"       json:"max_age"`
 }
 
 type ChatConfig struct {

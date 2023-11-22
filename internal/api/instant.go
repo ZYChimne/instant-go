@@ -39,7 +39,6 @@ func GetFeed(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": instants})
 }
 
-
 func GetInstant(c *gin.Context) {
 	userID := c.MustGet("UserID").(uint)
 	_instantID := c.Query("instantID")

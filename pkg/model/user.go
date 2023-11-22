@@ -29,8 +29,8 @@ type User struct {
 	CoverPhoto     string
 	FollowingCount int
 	FollowerCount  int
-	Followings     []Following `gorm:"foreignKey:UserID"`
-	Followers      []Following `gorm:"foreignKey:TargetID"`
+	Followings     []Following    `gorm:"foreignKey:UserID"`
+	Followers      []Following    `gorm:"foreignKey:TargetID"`
 	Conversations  []Conversation `gorm:"many2many:conversation_users;"`
 }
 

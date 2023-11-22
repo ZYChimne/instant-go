@@ -19,5 +19,5 @@ type Message struct {
 
 type InboxMessage struct {
 	Message
-	UserID		 uint
+	UserID uint
 }
