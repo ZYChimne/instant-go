@@ -14,6 +14,7 @@ const LoginError = "please check if your account or password is correct"
 const GetFeedError = "get feed error"
 
 // Instant
+const GetInstantError = "get instant error"
 const GetInstantsError = "get instants error"
 const AddInstantError = "add instant error"
 const UpdateInstantError = "update instant error"

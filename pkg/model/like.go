@@ -4,9 +4,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type Like struct {
+type InstantLike struct {
 	gorm.Model
 	BasicUser
 	InstantID string
-	Attitude  int
+	Attitude  int `gorm:"default:0"`
+}
+
+type CommentLike struct {
+	gorm.Model
+	BasicUser
+	CommentID string
+	Attitude  int `gorm:"default:0"`
 }

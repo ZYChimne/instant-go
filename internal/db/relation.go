@@ -43,7 +43,7 @@ func AddFollowing(following *model.Following) error {
 		return res.Error
 	}
 	var targetUser model.User
-	if err := tx.Select("type").Where("id = ?", following.TargetID).First(&targetUser).Error; err != nil {
+	if err := tx.Select("user_type").Where("id = ?", following.TargetID).First(&targetUser).Error; err != nil {
 		tx.Rollback()
 		return err
 	}

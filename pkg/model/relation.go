@@ -7,7 +7,7 @@ type Following struct {
 	UserID     uint `gorm:"uniqueIndex:compositeIndex"`
 	TargetID   uint `gorm:"uniqueIndex:compositeIndex"`
 	IsFriend   bool
-	TargetType int
+	TargetType int // Target User Type
 }
 
 type JointFollowing struct {

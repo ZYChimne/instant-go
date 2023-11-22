@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func LikeInstant(like *model.Like) error {
+func LikeInstant(like *model.InstantLike) error {
 	tx := PostgresDB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -43,7 +43,7 @@ func LikeInstant(like *model.Like) error {
 	return tx.Commit().Error
 }
 
-func UnlikeInstant(like *model.Like) error {
+func UnlikeInstant(like *model.InstantLike) error {
 	tx := PostgresDB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -71,6 +71,6 @@ func UnlikeInstant(like *model.Like) error {
 	return tx.Commit().Error
 }
 
-func GetLikes(instantID uint, offset int, limit int, likes *[]model.Like) error {
+func GetLikes(instantID uint, offset int, limit int, likes *[]model.InstantLike) error {
 	return PostgresDB.Where("instant_id = ?", instantID).Find(&likes).Order("created desc").Offset(offset).Limit(limit).Error
 }

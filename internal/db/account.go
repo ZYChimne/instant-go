@@ -1,11 +1,12 @@
 package database
 
 import (
+	"strconv"
 	"zychimne/instant/pkg/model"
 	"zychimne/instant/pkg/schema"
 )
 
-const FuzzyMatchThreshold = 2
+const FuzzyMatchThreshold int = 2
 
 func CreateAccount(user *model.User) error {
 	return PostgresDB.Create(&user).Error
@@ -36,7 +37,7 @@ func DeleteAccountByID(user *model.User) error {
 }
 
 func SearchAccounts(keyword string, offset int, limit int, users *[]schema.BasicAccountResponse) error {
-	return PostgresDB.Where("difference(nickname, ?) > "+string(rune(FuzzyMatchThreshold)), keyword).Offset(offset).Limit(limit).Find(&users).Error
+	return PostgresDB.Table("users").Where("difference(nickname, ?) > "+strconv.Itoa(FuzzyMatchThreshold), keyword).Offset(offset).Limit(limit).Scan(&users).Error
 }
 
 func GetBasicAccount(user *model.BasicUser) error {

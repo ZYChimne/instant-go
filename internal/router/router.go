@@ -6,7 +6,6 @@ import (
 	database "zychimne/instant/internal/db"
 	"zychimne/instant/middleware"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/zychimne/gin-cache"
 	"github.com/zychimne/gin-cache/persist"
@@ -15,13 +14,7 @@ import (
 func Create(useCors bool) *gin.Engine {
 	r := gin.Default()
 	if useCors {
-		r.Use(cors.New(cors.Config{
-			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authentication"},
-			AllowCredentials: true,
-			AllowAllOrigins:  true,
-			MaxAge:           24 * time.Hour,
-		}))
+		r.Use(middleware.Cors())
 	}
 	r.Use(middleware.Error())
 	localStore := persist.NewMemoryStore(1 * time.Minute)
@@ -64,6 +57,10 @@ func Create(useCors bool) *gin.Engine {
 	// Share
 	shareRouterGroup := v1RouterGroup.Group("share").Use(middleware.Auth())
 	shareRouterGroup.GET("", api.ShareInstant)
+	// Chat
+	chatRouterGroup := v1RouterGroup.Group("chat").Use(middleware.Auth())
+	chatRouterGroup.Use(middleware.ServerSentEvent()).GET("", api.Receive)
+	chatRouterGroup.POST("", api.Send)
 	// Geo
 	geoRouterGroup := v1RouterGroup.Group("geo")
 	geoRouterGroup.GET("country", cache.CacheByRequestURI(localStore, 1*time.Minute), api.GetCountries)

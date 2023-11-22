@@ -35,4 +35,5 @@ func GetFeed(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFeedError))
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"data": instants})
 }

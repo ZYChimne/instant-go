@@ -61,5 +61,20 @@ func GetToken(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": token})
 		return
 	}
+	if len(userSchema.Username) > 0 {
+		var userModel model.User
+		if err := database.LoginUserByUsername(userSchema.Username, &userModel); err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New(LoginError))
+			return
+		}
+		if !util.CheckPasswordHash(userSchema.Password, userModel.Password) {
+			c.AbortWithError(http.StatusUnauthorized, errors.New(LoginError))
+			return
+		}
+		token := util.GenerateJwt(userModel.ID)
+		c.JSON(http.StatusOK, gin.H{"data": token})
+		return
+	}
 	c.AbortWithError(http.StatusUnprocessableEntity, errors.New(LoginError))
 }
