@@ -12,7 +12,7 @@ import (
 )
 
 func GetShares(c *gin.Context) {
-	_ = c.MustGet("UserID")
+	_ = c.MustGet("UserID").(uint)
 	instantID, err := strconv.ParseUint(c.Query("instantID"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -42,14 +42,14 @@ func GetShares(c *gin.Context) {
 }
 
 func ShareInstant(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var instant model.Instant
 	if err := c.Bind(&instant); err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(ShareInstantError))
 		return
 	}
-	instant.UserID = userID.(uint)
+	instant.UserID = userID
 	err := database.ShareInstant(&instant)
 	if err != nil {
 		log.Println(err)

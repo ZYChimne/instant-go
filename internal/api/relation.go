@@ -13,7 +13,7 @@ import (
 )
 
 func GetFollowings(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -27,7 +27,7 @@ func GetFollowings(c *gin.Context) {
 		return
 	}
 	followings := []model.JointFollowing{}
-	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &followings)
+	err = database.GetFollowings(userID, int(offset), int(limit), &followings)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFollowingsError))
@@ -61,7 +61,7 @@ func GetFollowers(c *gin.Context) {
 }
 
 func GetPotentialFollowings(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -75,7 +75,7 @@ func GetPotentialFollowings(c *gin.Context) {
 		return
 	}
 	users := []model.User{}
-	err = database.GetPotentialFollowings(userID.(uint), int(offset), int(limit), &users)
+	err = database.GetPotentialFollowings(userID, int(offset), int(limit), &users)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetPotentialFollowingsError))
@@ -85,7 +85,7 @@ func GetPotentialFollowings(c *gin.Context) {
 }
 
 func Follow(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var followingSchema schema.UpsertFollowingRequest
 	if err := c.Bind(&followingSchema); err != nil {
 		log.Println(err)
@@ -93,7 +93,7 @@ func Follow(c *gin.Context) {
 		return
 	}
 	following := model.Following{
-		UserID:   userID.(uint),
+		UserID:   userID,
 		TargetID: followingSchema.TargetID,
 	}
 	err := database.AddFollowing(&following)
@@ -106,7 +106,7 @@ func Follow(c *gin.Context) {
 }
 
 func Unfollow(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var followingSchema schema.UpsertFollowingRequest
 	if err := c.Bind(&followingSchema); err != nil {
 		log.Println(err)
@@ -114,7 +114,7 @@ func Unfollow(c *gin.Context) {
 		return
 	}
 	following := model.Following{
-		UserID:   userID.(uint),
+		UserID:   userID,
 		TargetID: followingSchema.TargetID,
 	}
 	err := database.RemoveFollowing(&following)
@@ -127,7 +127,7 @@ func Unfollow(c *gin.Context) {
 }
 
 func GetFriends(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -141,7 +141,7 @@ func GetFriends(c *gin.Context) {
 		return
 	}
 	friends := []model.JointFollowing{}
-	err = database.GetFollowings(userID.(uint), int(offset), int(limit), &friends)
+	err = database.GetFollowings(userID, int(offset), int(limit), &friends)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFriendsError))

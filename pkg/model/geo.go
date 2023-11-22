@@ -31,3 +31,8 @@ type Country struct {
 	States    []State `gorm:"foreignKey:CountryID"`
 	Cities    []City  `gorm:"foreignKey:CountryID"`
 }
+
+type GeoChecker struct {
+	CountryName string
+	StateName   string
+}

@@ -31,6 +31,7 @@ type User struct {
 	FollowerCount  int
 	Followings     []Following `gorm:"foreignKey:UserID"`
 	Followers      []Following `gorm:"foreignKey:TargetID"`
+	Conversations  []Conversation `gorm:"many2many:conversation_users;"`
 }
 
 type BasicUser struct {

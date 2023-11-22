@@ -12,14 +12,14 @@ import (
 )
 
 func Like(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var like model.InstantLike
 	if err := c.Bind(&like); err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(LikeError))
 		return
 	}
-	like.UserID = userID.(uint)
+	like.UserID = userID
 	err := database.LikeInstant(&like)
 	if err != nil {
 		log.Println(err)
@@ -30,14 +30,14 @@ func Like(c *gin.Context) {
 }
 
 func Unlike(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var like model.InstantLike
 	if err := c.Bind(&like); err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(LikeError))
 		return
 	}
-	like.UserID = userID.(uint)
+	like.UserID = userID
 	err := database.UnlikeInstant(&like)
 	if err != nil {
 		log.Println(err)
@@ -48,7 +48,7 @@ func Unlike(c *gin.Context) {
 }
 
 func GetLikes(c *gin.Context) {
-	_ = c.MustGet("UserID")
+	_ = c.MustGet("UserID").(uint)
 	instantID, err := strconv.ParseUint(c.Query("instantID"), 10, 64)
 	if err != nil {
 		log.Println(err)

@@ -19,8 +19,8 @@ type Instant struct {
 }
 
 // A combination of speed and space efficiency
-// Feed Table only stores the instantID rather than the whole content
-type Feed struct {
+// Inbox Instant Table only stores the instantID rather than the whole content
+type InboxInstant struct {
 	gorm.Model
 	InstantID   uint
 	UserID      uint

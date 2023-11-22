@@ -2,17 +2,18 @@ package middleware
 
 import (
 	"time"
+	"zychimne/instant/config"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func Cors() gin.HandlerFunc {
+func Cors(c config.CorsConfig) gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-		AllowOrigins:     []string{"http://localhost:3000", "https://instant-next.vercel.app"},
-		MaxAge:           24 * time.Hour,
+		AllowMethods:     c.AllowMethods,
+		AllowHeaders:     c.AllowHeaders,
+		AllowCredentials: c.AllowCreds,
+		AllowOrigins:     c.AllowOrigins,
+		MaxAge:           time.Duration(c.MaxAge) * time.Hour,
 	})
 }

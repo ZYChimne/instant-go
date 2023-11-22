@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func GetInboxInstants(userID uint, offset int, limit int, instants *[]model.InboxInstant) error {
+	return PostgresDB.Where("user_id = ?", userID).Order("created_at desc").Offset(offset).Limit(limit).Find(&instants).Error
+}
+
 func GetInstant(userID uint, instantID uint, instant *model.Instant) error {
 	return PostgresDB.Where("id = ?", instantID).First(&instant).Error
 }
@@ -54,14 +58,14 @@ func AddInstant(instant *schema.UpsertInstantRequest, userID uint) error {
 }
 
 func upsertIntoFeed(tx *gorm.DB, followerIDs []uint, instantID uint, userID uint) error {
-	feeds := make([]model.Feed, len(followerIDs))
+	feeds := make([]model.InboxInstant, len(followerIDs))
 	for i, followerID := range followerIDs {
-		feeds[i] = model.Feed{
+		feeds[i] = model.InboxInstant{
 			InstantID: instantID,
 			UserID:    followerID,
 		}
 	}
-	if err := tx.CreateInBatches(&feeds, addInstantBatchSize).Error; err != nil {
+	if err := tx.CreateInBatches(&feeds, config.Conf.Database.App.CreateInstantBatchSize).Error; err != nil {
 		return err
 	}
 	return fanOutOnWrite(tx, followerIDs)
@@ -69,7 +73,7 @@ func upsertIntoFeed(tx *gorm.DB, followerIDs []uint, instantID uint, userID uint
 
 func fanOutOnWrite(tx *gorm.DB, userIDs []uint) error {
 	for _, userID := range userIDs {
-		if err := tx.Exec("DELETE FROM feeds WHERE id IN (SELECT id FROM feeds WHERE user_id = ? AND (SELECT COUNT(*) FROM feeds WHERE user_id = ?) > ? ORDER BY created_at ASC LIMIT 1)", userID, userID, config.Conf.Instant.MaxFeed-1).Error; err != nil {
+		if err := tx.Exec("DELETE FROM feeds WHERE id IN (SELECT id FROM feeds WHERE user_id = ? AND (SELECT COUNT(*) FROM feeds WHERE user_id = ?) > ? ORDER BY created_at ASC LIMIT 1)", userID, userID, config.Conf.Database.App.MaxFeed-1).Error; err != nil {
 			return err
 		}
 	}
@@ -182,7 +186,7 @@ func DeleteInstant(instant *model.Instant) error {
 		tx.Rollback()
 		return err
 	}
-	err = tx.Where("instant_id = ?", instant.ID).Delete(&model.Feed{}).Error
+	err = tx.Where("instant_id = ?", instant.ID).Delete(&model.InboxInstant{}).Error
 	if err != nil {
 		tx.Rollback()
 		return err

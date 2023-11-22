@@ -42,6 +42,10 @@ func CreateAccount(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, errors.New(CreateAccountError))
 		return
 	}
+	if err := database.CheckGeo(userSchema.Country, userSchema.State, userSchema.City, userSchema.ZipCode); err != nil {
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(CreateAccountError))
+		return
+	}
 	userModel := model.User{
 		Email:          userSchema.Email,
 		Phone:          userSchema.Phone,
@@ -75,9 +79,9 @@ func CreateAccount(c *gin.Context) {
 }
 
 func DeleteAccount(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var user model.User
-	user.ID = userID.(uint)
+	user.ID = userID
 	err := database.DeleteAccountByID(&user)
 	if err != nil {
 		log.Println(err)
@@ -88,7 +92,7 @@ func DeleteAccount(c *gin.Context) {
 }
 
 func GetAccount(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	targetID := c.Query("userID")
 	var user schema.AccountResponse
 	if len(targetID) > 0 {
@@ -147,12 +151,12 @@ func GetAccount(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": user})
 		return
 	}
-	database.GetAccountByID(userID.(uint), &user)
+	database.GetAccountByID(userID, &user)
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
 
 func SearchAccounts(c *gin.Context) {
-	_ = c.MustGet("UserID")
+	_ = c.MustGet("UserID").(uint)
 	keyword := c.Query("keyword")
 	if len(keyword) == 0 {
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(SearchAccountsError))

@@ -28,14 +28,39 @@ type OpenAIConfig struct {
 	Token string `yaml:"token"     json:"token"`
 }
 
+type CorsConfig struct {
+	Enabled      bool          `yaml:"enabled"      json:"enabled"`
+	AllowOrigins []string      `yaml:"allow_origins" json:"allow_origins"`
+	AllowMethods []string      `yaml:"allow_methods" json:"allow_methods"`
+	AllowHeaders []string      `yaml:"allow_headers" json:"allow_headers"`
+	AllowCreds   bool          `yaml:"allow_creds"   json:"allow_creds"`
+	MaxAge       int `yaml:"max_age"       json:"max_age"`
+}
+
+type ChatConfig struct {
+	RetrieveInterval int `yaml:"retrieve_interval" json:"retrieve_interval"`
+}
+
+type DatabaseAppConfig struct {
+	MaxFeed                int `yaml:"max_feed" json:"max_feed"`
+	CreateInstantBatchSize int `yaml:"create_instant_batch_size" json:"create_instant_batch_size"`
+	CreateMessageBatchSize int `yaml:"create_message_batch_size" json:"create_message_batch_size"`
+}
+
+type DatabaseConfig struct {
+	Postgres PostgresConfig    `yaml:"postgres" json:"postgres"`
+	Redis    RedisConfig       `yaml:"redis"    json:"redis"`
+	App      DatabaseAppConfig `yaml:"app"      json:"app"`
+}
+
 type InstantConfig struct {
-	Port    string `yaml:"port" json:"port"`
-	MaxFeed int    `yaml:"max_feed" json:"max_feed"`
+	Port string     `yaml:"port" json:"port"`
+	Cors CorsConfig `yaml:"cors" json:"cors"`
+	Chat ChatConfig `yaml:"chat" json:"chat"`
 }
 
 type Config struct {
-	Postgres PostgresConfig `yaml:"postgres" json:"postgres"`
-	Redis    RedisConfig    `yaml:"redis"    json:"redis"`
+	Database DatabaseConfig `yaml:"database" json:"database"`
 	OpenAI   OpenAIConfig   `yaml:"openai"   json:"openai"`
 	Instant  InstantConfig  `yaml:"instant" json:"instant"`
 }

@@ -12,8 +12,8 @@ var RedisClient *redis.Client
 
 func ConnectRedis() {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     strings.Join([]string{config.Conf.Redis.Host, config.Conf.Redis.Port}, ":"),
-		Password: config.Conf.Redis.Password,
-		DB:       config.Conf.Redis.Database,
+		Addr:     strings.Join([]string{config.Conf.Database.Redis.Host, config.Conf.Database.Redis.Port}, ":"),
+		Password: config.Conf.Database.Redis.Password,
+		DB:       config.Conf.Database.Redis.Database,
 	})
 }

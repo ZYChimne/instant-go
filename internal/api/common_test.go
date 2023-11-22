@@ -23,7 +23,7 @@ func init() {
 	config.LoadConfig("../../config/dev.yml")
 	database.ConnectPostgres()
 	database.ConnectRedis()
-	r = router.Create(false)
+	r = router.Create()
 }
 
 func FormatURL(prefix string, url string) string {

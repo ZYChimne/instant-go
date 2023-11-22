@@ -12,8 +12,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// The Feed in an inbox with a message upper bound
+// It does not retrieve messages beyond that upper bound (ex. Instagram)
+// Instead, display trending post for the user
+func GetFeed(c *gin.Context) {
+	userID := c.MustGet("UserID").(uint)
+	offset, err := strconv.ParseInt(c.Query("offset"), 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFeedError))
+		return
+	}
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetFeedError))
+		return
+	}
+	instants := []model.InboxInstant{}
+	err = database.GetInboxInstants(userID, int(offset), int(limit), &instants)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetFeedError))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": instants})
+}
+
+
 func GetInstant(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	_instantID := c.Query("instantID")
 	if len(_instantID) == 0 {
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantError))
@@ -26,7 +54,7 @@ func GetInstant(c *gin.Context) {
 		return
 	}
 	var instant model.Instant
-	err = database.GetInstant(userID.(uint), uint(instantID), &instant)
+	err = database.GetInstant(userID, uint(instantID), &instant)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetInstantError))
@@ -36,7 +64,7 @@ func GetInstant(c *gin.Context) {
 }
 
 func GetInstants(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	_targetID := c.Query("userID")
 	if len(_targetID) == 0 {
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetInstantsError))
@@ -61,7 +89,7 @@ func GetInstants(c *gin.Context) {
 		return
 	}
 	var instants []model.Instant
-	err = database.GetInstants(userID.(uint), uint(targetID), int(offset), int(limit), &instants)
+	err = database.GetInstants(userID, uint(targetID), int(offset), int(limit), &instants)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetInstantsError))
@@ -88,7 +116,7 @@ func AddInstant(c *gin.Context) {
 }
 
 func UpdateInstant(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var instantSchema schema.UpsertInstantRequest
 	if err := c.Bind(&instantSchema); err != nil {
 		log.Println(err)
@@ -101,7 +129,7 @@ func UpdateInstant(c *gin.Context) {
 		Content:     instantSchema.Content,
 		Visibility:  instantSchema.Visibility,
 		RefOriginID: instantSchema.RefOriginID,
-		UserID:      userID.(uint),
+		UserID:      userID,
 	}
 	err := database.UpdateInstant(&instantModel)
 	if err != nil {
@@ -113,7 +141,7 @@ func UpdateInstant(c *gin.Context) {
 }
 
 func DeleteInstant(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	_instantID := c.Query("instantID")
 	if len(_instantID) == 0 {
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(DeleteInstantError))
@@ -127,7 +155,7 @@ func DeleteInstant(c *gin.Context) {
 	}
 	var instant model.Instant
 	instant.ID = uint(instantID)
-	instant.UserID = userID.(uint)
+	instant.UserID = userID
 	err = database.DeleteInstant(&instant)
 	if err != nil {
 		log.Println(err)

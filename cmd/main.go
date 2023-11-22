@@ -11,6 +11,6 @@ func main() {
 	config.LoadConfig("config/dev.yml")
 	database.ConnectPostgres()
 	database.ConnectRedis()
-	r := router.Create(true)
+	r := router.Create()
 	r.Run(":" + config.Conf.Instant.Port)
 }

@@ -14,12 +14,10 @@ import (
 	"zychimne/instant/pkg/model"
 )
 
-const addInstantBatchSize = 1000
-
 var PostgresDB *gorm.DB
 
 func ConnectPostgres() {
-	conn := strings.Join([]string{"host=" + config.Conf.Postgres.Host, "user=" + config.Conf.Postgres.User, "password=" + config.Conf.Postgres.Password, "dbname=" + config.Conf.Postgres.Database, config.Conf.Postgres.Extras}, " ")
+	conn := strings.Join([]string{"host=" + config.Conf.Database.Postgres.Host, "user=" + config.Conf.Database.Postgres.User, "password=" + config.Conf.Database.Postgres.Password, "dbname=" + config.Conf.Database.Postgres.Database, config.Conf.Database.Postgres.Extras}, " ")
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 		logger.Config{
@@ -34,6 +32,6 @@ func ConnectPostgres() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&model.User{}, &model.Following{}, &model.Instant{}, &model.Feed{})
+	db.AutoMigrate(&model.User{}, &model.Following{}, &model.Instant{}, &model.InboxInstant{})
 	PostgresDB = db
 }

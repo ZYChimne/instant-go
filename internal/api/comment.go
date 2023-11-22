@@ -12,7 +12,7 @@ import (
 )
 
 func GetComments(c *gin.Context) {
-	_ = c.MustGet("UserID")
+	_ = c.MustGet("UserID").(uint)
 	instantID, err := strconv.ParseUint(c.Query("instantID"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -42,14 +42,14 @@ func GetComments(c *gin.Context) {
 }
 
 func AddComment(c *gin.Context) {
-	userID := c.MustGet("UserID")
+	userID := c.MustGet("UserID").(uint)
 	var comment model.Comment
 	if err := c.Bind(&comment); err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(AddCommentError))
 		return
 	}
-	comment.UserID = userID.(uint)
+	comment.UserID = userID
 	err := database.AddComment(&comment)
 	if err != nil {
 		log.Println(err)

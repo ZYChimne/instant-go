@@ -7,7 +7,7 @@ This is the Back-end Project of Instant, and you can visit the Front-end Project
 * High Performance, High Availability and Scalable
 * Access: RESTful
 * Storage: Redis & PostgreSQL
-* Fan out on Write
+* Fan out on Write (Both Posts and Messages)
 * [Efficient Flow Counting Algorithm](https://www.usenix.org/system/files/conference/atc18/atc18-gong.pdf) and Hot Spot Detection
 
 ## Project setup
