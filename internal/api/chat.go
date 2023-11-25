@@ -16,8 +16,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetRecentConversations(c *gin.Context) {
+	userID := c.MustGet("UserID").(uint)
+	offset, err := strconv.Atoi(c.Query("offset"))
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetRecentConversationsError))
+		return
+	}
+	limit, err := strconv.Atoi(c.Query("limit"))
+	if err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetRecentConversationsError))
+		return
+	}
+	var conversations []schema.ConversationResponse
+	if err := database.GetRecentConversations(userID, offset, limit, &conversations); err != nil {
+		log.Println(err)
+		c.AbortWithError(http.StatusInternalServerError, errors.New(GetRecentConversationsError))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": conversations})
+}
+
 func CreateConversation(c *gin.Context) {
-	userID := c.MustGet("userID").(uint)
+	userID := c.MustGet("UserID").(uint)
 	var conversationSchema schema.UpsertConversationRequest
 	if err := c.Bind(&conversationSchema); err != nil {
 		log.Println(err)
@@ -43,7 +66,7 @@ func CreateConversation(c *gin.Context) {
 }
 
 func Listen(c *gin.Context) {
-	userID := c.MustGet("userID").(uint)
+	userID := c.MustGet("UserID").(uint)
 	mID, err := strconv.ParseUint(c.Query("mID"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -80,7 +103,7 @@ func Listen(c *gin.Context) {
 }
 
 func Send(c *gin.Context) {
-	userID := c.MustGet("userID").(uint)
+	userID := c.MustGet("UserID").(uint)
 	var messageSchema schema.UpsertMessageRequest
 	if err := c.Bind(&messageSchema); err != nil {
 		log.Println(err)
@@ -89,6 +112,7 @@ func Send(c *gin.Context) {
 	}
 	messageModel := model.Message{
 		SenderID:    userID,
+		ConversationID: messageSchema.ConversationID,
 		MessageType: messageSchema.MessageType,
 		Content:     messageSchema.Content,
 	}

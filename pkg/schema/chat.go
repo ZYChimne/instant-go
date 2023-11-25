@@ -21,3 +21,14 @@ type UpsertConversationRequest struct {
 	ConversationType int    `json:"conversationType"`
 	Users            []uint `json:"users"`
 }
+
+type ConversationResponse struct {
+	ID               uint                   `json:"id"`
+	ConversationName string                 `json:"conversationName"`
+	ConversationType int                    `json:"conversationType"`
+	CreatedAt        string                 `json:"createdAt"`
+	UpdatedAt        string                 `json:"updatedAt"`
+	Content          string                 `json:"content"`
+	SenderID         uint                   `json:"senderID"`
+	Users            []BasicAccountResponse `json:"users" gorm:"many2many:conversation_users;"`
+}

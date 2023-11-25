@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-	"zychimne/instant/internal/util"
+	"zychimne/instant/tools"
 	"zychimne/instant/pkg/schema"
 
 	"github.com/stretchr/testify/assert"

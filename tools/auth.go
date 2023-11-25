@@ -13,7 +13,7 @@ import (
 var hmac = []byte("zychimne")
 
 type CustomClaims struct {
-	UserID uint `json:"userID"`
+	UserID uint `json:"UserID"`
 	jwt.RegisteredClaims
 }
 
@@ -23,7 +23,7 @@ func GenerateJwt(userID uint) string {
 		jwt.RegisteredClaims{
 			Issuer:    "instant-go",
 			Subject:   "authentication",
-			Audience:  jwt.ClaimStrings{"instant-vue"},
+			Audience:  jwt.ClaimStrings{"instant-next"},
 			ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(0, 0, 1)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -31,7 +31,7 @@ func GenerateJwt(userID uint) string {
 	})
 	tokenString, err := token.SignedString(hmac)
 	if err != nil {
-		log.Fatal("jwt token generate error ", err.Error())
+		log.Println("jwt token generate error ", err.Error())
 	}
 	return tokenString
 }

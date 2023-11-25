@@ -24,6 +24,7 @@ func Create() *gin.Engine {
 	v1RouterGroup := r.Group("v1")
 	// Ping
 	v1RouterGroup.GET("ping", api.Ping)
+	v1EventRouterGroup := v1RouterGroup.Group("event").Use(middleware.ServerSentEvent())
 	// Account
 	{
 		accountRouterGroup := v1RouterGroup.Group("account")
@@ -38,6 +39,12 @@ func Create() *gin.Engine {
 	{
 		authRouterGroup := v1RouterGroup.Group("auth")
 		authRouterGroup.POST("token", api.GetToken)
+	}
+	// Event
+	{
+		v1EventRouterGroup.GET("ping", api.EventPing)
+		authEventRouterGroup := v1EventRouterGroup.Use(middleware.Auth())
+		authEventRouterGroup.Use(middleware.Auth()).GET("chat", api.Listen)
 	}
 	// Feed
 	{
@@ -75,7 +82,8 @@ func Create() *gin.Engine {
 	// Chat
 	{
 		chatRouterGroup := v1RouterGroup.Group("chat").Use(middleware.Auth())
-		chatRouterGroup.Use(middleware.ServerSentEvent()).GET("listen", api.Listen)
+		chatRouterGroup.GET("conversation", api.GetRecentConversations)
+		chatRouterGroup.POST("conversation", api.CreateConversation)
 		chatRouterGroup.POST("", api.Send)
 	}
 	// Geo

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/mail"
 	database "zychimne/instant/internal/db"
-	"zychimne/instant/internal/util"
+	"zychimne/instant/tools"
 	"zychimne/instant/pkg/model"
 	"zychimne/instant/pkg/schema"
 

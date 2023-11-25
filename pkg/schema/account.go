@@ -33,7 +33,7 @@ type LoginAccountRequest struct {
 }
 
 type AccountResponse struct {
-	UserID       uint      `json:"userID"`
+	ID           uint      `json:"userID"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 	Email        string    `json:"email"`

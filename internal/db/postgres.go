@@ -32,6 +32,6 @@ func ConnectPostgres() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&model.User{}, &model.Following{}, &model.Instant{}, &model.InboxInstant{})
+	db.AutoMigrate(&model.User{}, &model.Following{}, &model.Instant{}, &model.InboxInstant{}, &model.Conversation{}, &model.InboxMessage{}, &model.Message{})
 	PostgresDB = db
 }

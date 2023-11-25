@@ -11,6 +11,7 @@ const CheckIfAccountExistsError = "check if account exists error"
 const LoginError = "please check if your account or password is correct"
 
 // Chat
+const GetRecentConversationsError = "get recent conversations error"
 const CreateConversationError = "create conversation error"
 const ListenMessagesError = "listen messages error"
 const SendMessagesError = "send messages error"

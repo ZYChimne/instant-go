@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"zychimne/instant/internal/util"
+	"zychimne/instant/tools"
 
 	"github.com/gin-gonic/gin"
 )
