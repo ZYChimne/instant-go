@@ -21,6 +21,17 @@ type Message struct {
 type InboxMessage struct {
 	Message
 	MessageID uint
-	UserID uint
-	IsRead bool
+	UserID    uint
+	IsRead    bool
+}
+
+type RecentConversation struct {
+	ID               uint   `json:"conversationID"`
+	ConversationName string `json:"conversationName"`
+	ConversationType int    `json:"conversationType"`
+	CreatedAt        string `json:"createdAt"`
+	UpdatedAt        string `json:"updatedAt"`
+	Content          string `json:"content"`
+	SenderID         uint   `json:"senderID"`
+	Users            string `json:"-"`
 }

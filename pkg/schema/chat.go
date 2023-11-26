@@ -1,5 +1,7 @@
 package schema
 
+import "zychimne/instant/pkg/model"
+
 type UpsertMessageRequest struct {
 	ConversationID uint   `json:"conversationID"`
 	MessageType    int    `json:"messageType"`
@@ -23,12 +25,6 @@ type UpsertConversationRequest struct {
 }
 
 type ConversationResponse struct {
-	ID               uint                   `json:"id"`
-	ConversationName string                 `json:"conversationName"`
-	ConversationType int                    `json:"conversationType"`
-	CreatedAt        string                 `json:"createdAt"`
-	UpdatedAt        string                 `json:"updatedAt"`
-	Content          string                 `json:"content"`
-	SenderID         uint                   `json:"senderID"`
-	Users            []BasicAccountResponse `json:"users" gorm:"many2many:conversation_users;"`
+	model.RecentConversation
+	Users []BasicAccountResponse `json:"users"`
 }

@@ -30,13 +30,22 @@ func GetRecentConversations(c *gin.Context) {
 		c.AbortWithError(http.StatusUnprocessableEntity, errors.New(GetRecentConversationsError))
 		return
 	}
-	var conversations []schema.ConversationResponse
-	if err := database.GetRecentConversations(userID, offset, limit, &conversations); err != nil {
+	var conversationModels []model.RecentConversation
+	if err := database.GetRecentConversations(userID, offset, limit, &conversationModels); err != nil {
 		log.Println(err)
 		c.AbortWithError(http.StatusInternalServerError, errors.New(GetRecentConversationsError))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": conversations})
+	conversationResponse := make([]schema.ConversationResponse, len(conversationModels))
+	for i, conversationModel := range conversationModels {
+		if err := json.Unmarshal([]byte(conversationModel.Users), &conversationResponse[i].Users); err != nil {
+			log.Println(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New(GetRecentConversationsError))
+			return
+		}
+		conversationResponse[i].RecentConversation = conversationModel
+	}
+	c.JSON(http.StatusOK, gin.H{"data": conversationResponse})
 }
 
 func CreateConversation(c *gin.Context) {
@@ -111,10 +120,10 @@ func Send(c *gin.Context) {
 		return
 	}
 	messageModel := model.Message{
-		SenderID:    userID,
+		SenderID:       userID,
 		ConversationID: messageSchema.ConversationID,
-		MessageType: messageSchema.MessageType,
-		Content:     messageSchema.Content,
+		MessageType:    messageSchema.MessageType,
+		Content:        messageSchema.Content,
 	}
 	if err := database.AddMessage(&messageModel); err != nil {
 		log.Println(err)

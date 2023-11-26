@@ -6,19 +6,43 @@ import (
 	"zychimne/instant/pkg/schema"
 )
 
-func GetRecentConversations(userID uint, offset int, limit int, conversations *[]schema.ConversationResponse) error {
-	if err := PostgresDB.Table("conversations").Select("conversations.id", "conversations.conversation_name", "conversations.conversation_type", "conversations.created_at", "conversations.updated_at, messages.content, messages.sender_id").
-		Joins("left join messages on conversations.last_message_id = messages.id").
-		Where("conversations.id in (select conversation_id from conversation_users where user_id = ?)", userID).
-		Order("updated_at desc").Offset(offset).Limit(limit).Scan(&conversations).Error; err != nil {
-		return err
-	}
-	for i, conversation := range *conversations {
-		if err := PostgresDB.Table("users").Select("id", "username", "nickname", "avatar", "user_type").Where("id in (select user_id from conversation_users where conversation_id = ? and user_id != ?)", conversation.ID, userID).Scan(&(*conversations)[i].Users).Error; err != nil {
-			return err
-		}
-	}
-	return nil
+func GetRecentConversations(userID uint, offset int, limit int, conversations *[]model.RecentConversation) error {
+	query := `
+        SELECT 
+            conversations.id,
+            conversations.conversation_name,
+            conversations.conversation_type,
+            conversations.created_at,
+            conversations.updated_at,
+            messages.content,
+            messages.sender_id,
+            COALESCE(json_agg(users), '[]'::json) as users
+        FROM conversations
+        LEFT JOIN messages ON conversations.last_message_id = messages.id
+        LEFT JOIN (
+            SELECT
+                u.id,
+                u.username,
+                u.nickname,
+                u.avatar,
+                u.user_type,
+                cu.conversation_id
+            FROM users u
+            JOIN conversation_users cu ON u.id = cu.user_id
+        ) users ON users.conversation_id = conversations.id AND users.id != ?
+        WHERE conversations.id IN (SELECT conversation_id FROM conversation_users WHERE user_id = ?)
+        GROUP BY 
+            conversations.id,
+            conversations.conversation_name,
+            conversations.conversation_type,
+            conversations.created_at,
+            conversations.updated_at,
+            messages.content,
+            messages.sender_id
+        ORDER BY conversations.updated_at DESC
+        OFFSET ? LIMIT ?
+    `
+	return PostgresDB.Raw(query, userID, userID, offset, limit).Scan(conversations).Error
 }
 
 func AddConversation(conversation *model.Conversation) error {
@@ -57,13 +81,8 @@ func AddMessage(message *model.Message) error {
 		inboxMessages[i] = model.InboxMessage{
 			UserID: user,
 		}
-		inboxMessages[i].MessageID = message.ID
-		inboxMessages[i].ConversationID = message.ConversationID
-		inboxMessages[i].SenderID = message.SenderID
-		inboxMessages[i].MessageType = message.MessageType
-		inboxMessages[i].Content = message.Content
-		inboxMessages[i].CreatedAt = message.CreatedAt
-		inboxMessages[i].UpdatedAt = message.UpdatedAt
+		inboxMessages[i].Message=*message
+		inboxMessages[i].ID = 0
 	}
 	if err := tx.CreateInBatches(&inboxMessages, config.Conf.Database.App.CreateInstantBatchSize).Error; err != nil {
 		tx.Rollback()
